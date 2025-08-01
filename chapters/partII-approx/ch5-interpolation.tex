@@ -1,0 +1,490 @@
+\chapter{Interpolation and Splines}
+
+\section*{Introduction and Motivation}
+Interpolation is a fundamental concept in numerical mathematics, where the goal is to construct a function that exactly matches a given set of data points. This is crucial in applications such as data fitting, numerical integration, computer graphics, and solving differential equations. The two main approaches are polynomial interpolation and spline interpolation, each with their own advantages and limitations.
+
+\section{Polynomial Interpolation}
+\label{sec:poly-interp}
+
+\paragraph{Problem Statement and Existence}
+Given \(n+1\) distinct nodes \(x_0 < x_1 < \cdots < x_n\) and data values \(y_0, \ldots, y_n\), the interpolation problem seeks a function \(p \in \mathbb{P}_n\) (the space of polynomials of degree at most \(n\)) such that
+\[
+    p(x_i) = y_i, \quad i = 0, \ldots, n.
+\]
+
+\begin{theorem}{Existence and Uniqueness of the Interpolating Polynomial}{poly-existence}
+    For any \(n+1\) distinct nodes \(x_0, \ldots, x_n\) and data \(y_0, \ldots, y_n\), there exists a unique polynomial \(p \in \mathbb{P}_n\) such that \(p(x_i) = y_i\) for all \(i\).
+\end{theorem}
+\begin{proof}
+    The Vandermonde matrix \(V = (x_i^j)_{i,j=0}^n\) is invertible when the \(x_i\) are distinct, so the linear system for the coefficients of \(p\) has a unique solution.
+\end{proof}
+
+\subsection{Lagrange Interpolation}
+Lagrange interpolation provides a direct formula for the interpolating polynomial, useful when all data points are known in advance and the polynomial needs to be written explicitly.
+
+
+Lagrange interpolation constructs the interpolating polynomial \(p_n \in \mathbb{P}_n\) as a linear combination of specially designed basis polynomials \(\ell_i(x)\), known as Lagrange basis polynomials, which are defined for each node \(x_i\) and the corresponding data value \(y_i\).
+
+\begin{definition}{Lagrange Interpolating Polynomial}{lagrange-def}
+    Given \(n+1\) distinct nodes \(x_0, \ldots, x_n\) and data values \(y_0, \ldots, y_n\), the \emph{Lagrange interpolating polynomial} is the unique polynomial \(p \in \mathbb{P}_n\) such that \(p(x_i) = y_i\) for all \(i\).
+    It is given explicitly by
+    \[
+        p(x) = \sum_{i=0}^n y_i \ell_i(x),
+    \]
+    where the \emph{Lagrange basis polynomial} \(\ell_i(x)\) is defined as:
+    \[
+        \ell_i(x) = \prod_{\substack{j=0 \\ j \neq i}}^n \frac{x - x_j}{x_i - x_j}.
+    \]
+\end{definition}
+
+The Lagrange basis polynomial \(\ell_i(x)\) is constructed to be \(1\) at \(x_i\) and \(0\) at all other nodes \(x_j\) (\(j \neq i\)), ensuring that the interpolant matches the data exactly at each node.
+
+\subsubsection{Properties of Lagrange Interpolation}
+This construction guarantees that \(p(x_j) = y_j\) for each \(j\), since \(\ell_i(x_j) = \delta_{ij}\). The Lagrange form is symmetric in the data points and provides a direct formula for the interpolating polynomial, although it is not the most efficient for updating when new nodes are added.
+
+\begin{property}{Properties of Lagrange Interpolation}{lagrange-prop}
+    \begin{itemize}[nosep]
+        \item \(\ell_i(x_j) = \delta_{ij}\) (the Kronecker delta), so \(p(x_i) = y_i\).
+        \item The interpolation is exact for all polynomials of degree at most \(n\).
+        \item The form is symmetric in the data points.
+        \item Adding a new node requires recomputing all basis polynomials.
+    \end{itemize}
+\end{property}
+
+\subsubsection{Algorithm}
+\begin{algorithm}[H]
+    \caption{Lagrange Interpolation}
+    \begin{algorithmic}[1]
+        \Require{Nodes \(x_0,\ldots,x_n\); values \(y_0,\ldots,y_n\); evaluation point \(x\)}
+        \Ensure{Interpolated value \(p(x)\)}
+        \State \(p \gets 0\)
+        \For{\(i = 0\) to \(n\)}
+        \State \(\ell \gets 1\)
+        \For{\(j = 0\) to \(n\)}
+        \If{\(j \neq i\)}
+        \State \(\ell \gets \ell \cdot \frac{x - x_j}{x_i - x_j}\)
+        \EndIf
+        \EndFor
+        \State \(p \gets p + y_i \cdot \ell\)
+        \EndFor
+        \State \Return \(p\)
+    \end{algorithmic}
+\end{algorithm}
+
+
+\begin{example}{Lagrange Interpolation for Three Points}{lagrange-ex}
+    Given \((x_0, y_0), (x_1, y_1), (x_2, y_2)\), the interpolating polynomial is
+    \[
+        p(x) = y_0 \frac{(x-x_1)(x-x_2)}{(x_0-x_1)(x_0-x_2)} + y_1 \frac{(x-x_0)(x-x_2)}{(x_1-x_0)(x_1-x_2)} + y_2 \frac{(x-x_0)(x-x_1)}{(x_2-x_0)(x_2-x_1)}.
+    \]
+\end{example}
+
+
+\subsection{Newton Interpolation}
+Newton interpolation provides an efficient and flexible way to construct the interpolating polynomial, especially when new data points are added incrementally. The Newton form expresses the interpolant using divided differences, which can be computed recursively and updated easily.
+
+\begin{definition}{Newton Interpolating Polynomial}{newton-def}
+    Given \(n+1\) distinct nodes \(x_0, \ldots, x_n\) and data values \(y_0, \ldots, y_n\), the \emph{Newton interpolating polynomial} is the unique polynomial \(p \in \mathbb{P}_n\) such that \(p(x_i) = y_i\) for all \(i\). It is given by
+    \[
+        p(x) = f[x_0] + f[x_0, x_1](x-x_0) + \cdots + f[x_0, \ldots, x_n](x-x_0)\cdots(x-x_{n-1}),
+    \]
+    where the \emph{divided differences} are defined recursively as
+    \[
+        f[x_i] = y_i, \quad f[x_i, \ldots, x_{i+k}] = \frac{f[x_{i+1}, \ldots, x_{i+k}] - f[x_i, \ldots, x_{i+k-1}]}{x_{i+k} - x_i}.
+    \]
+\end{definition}
+
+The Newton basis functions are nested products of the form \((x-x_0)\cdots(x-x_{k-1})\), and the coefficients are the divided differences computed from the data.
+
+\begin{property}{Properties of Newton Interpolation}{newton-prop}
+    \begin{itemize}[nosep]
+        \item \textbf{Uniqueness:} The Newton interpolating polynomial \(p(x)\) is unique and belongs to \(\mathbb{P}_n\), the space of polynomials of degree at most \(n\).
+        \item \textbf{Recursive Construction:} The divided differences \(f[x_0], f[x_0, x_1], \ldots, f[x_0, \ldots, x_n]\) are computed recursively, allowing efficient updates when new nodes are added.
+        \item \textbf{Basis Functions:} The polynomial \(p(x)\) is expressed as a linear combination of nested basis functions:
+              \[
+                  p(x) = f[x_0] + f[x_0, x_1](x-x_0) + \cdots + f[x_0, \ldots, x_n](x-x_0)\cdots(x-x_{n-1}),
+              \]
+              where each term involves a product of differences \((x-x_k)\) for \(k=0,\ldots,i-1\).
+        \item \textbf{Symmetry:} The Newton form is not symmetric in the nodes, unlike the Lagrange form. The order of nodes affects the divided differences and the resulting polynomial.
+        \item \textbf{Numerical Stability:} Newton interpolation is numerically stable for well-chosen nodes, such as Chebyshev nodes, and avoids the instability of high-degree polynomials at equally spaced nodes.
+        \item \textbf{Error Formula:} The interpolation error at \(x\) is given by
+              \[
+                  f(x) - p(x) = \frac{f^{(n+1)}(\xi)}{(n+1)!} \prod_{i=0}^n (x - x_i),
+              \]
+              for some \(\xi \in [x_0, x_n]\), where \(f^{(n+1)}(\xi)\) is the \((n+1)\)-th derivative of \(f\).
+    \end{itemize}
+\end{property}
+
+\begin{algorithm}[H]
+    \caption{Newton Interpolation (Divided Differences)}
+    \begin{algorithmic}[1]
+        \Require{Nodes \(x_0,\ldots,x_n\); values \(y_0,\ldots,y_n\); evaluation point \(x\)}
+        \Ensure{Interpolated value \(p(x)\)}
+        \State \(f[0],\ldots,f[n] \gets y_0,\ldots,y_n\) \Comment{Initialize divided differences}
+        \For{\(j = 1\) to \(n\)}
+        \For{\(i = n\) down to \(j\)}
+        \State \(f[i] \gets \frac{f[i] - f[i-1]}{x_i - x_{i-j}}\)
+        \EndFor
+        \EndFor
+        \State \(p \gets f[n]\)
+        \For{\(k = n-1\) down to \(0\)}
+        \State \(p \gets p \cdot (x - x_k) + f[k]\)
+        \EndFor
+        \State \Return \(p\)
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{example}{Newton Interpolation for Three Points}{newton-ex}
+    Given \((x_0, y_0), (x_1, y_1), (x_2, y_2)\), the interpolating polynomial is
+    \[
+        p(x) = y_0 + f[x_0, x_1](x-x_0) + f[x_0, x_1, x_2](x-x_0)(x-x_1).
+    \]
+\end{example}
+
+\begin{itemize}[nosep]
+    \item \textbf{Pros:} Efficient for adding points; numerically stable for well-chosen nodes.
+    \item \textbf{Cons:} Slightly more complex to write explicitly; still suffers from instability for large \(n\) and poor node choice.
+\end{itemize}
+
+\subsection{Neville's Algorithm}
+Neville's algorithm is useful for evaluating the interpolating polynomial at a specific point without explicitly constructing the full polynomial.
+The algorithm recursively computes the interpolating polynomial at a point \(x\) using the data \((x_0, y_0), \ldots, (x_n, y_n)\):
+
+\begin{definition}{Neville's Algorithm}{neville-def}
+    Given \(n+1\) distinct nodes \(x_0, \ldots, x_n\) and data values \(y_0, \ldots, y_n\), Neville's algorithm computes the value of the interpolating polynomial at a point \(x\) recursively. Define \(P_{i,j}(x)\) as the value at \(x\) of the polynomial interpolating the data points \((x_{i-j}, y_{i-j}), \ldots, (x_i, y_i)\). Then:
+    \begin{align}
+        P_{i,0}(x) &= y_i, \quad i = 0, \ldots, n, \\
+        P_{i,j}(x) &= \frac{(x - x_{i-j}) P_{i,j-1}(x) - (x - x_i) P_{i-1,j-1}(x)}{x_i - x_{i-j}}, \quad i = j, \ldots, n, \, j = 1, \ldots, i.
+    \end{align}
+    The final value \(P_{n,n}(x)\) gives the interpolated value at \(x\).
+\end{definition}
+
+\begin{property}{Properties of Neville's Algorithm}{neville-prop}
+    \begin{itemize}[nosep]
+        \item \textbf{Recursion:} The algorithm computes the value \(P_{n,n}(x)\) recursively using the relation
+              \[
+                  P_{i,j}(x) = \frac{(x - x_{i-j}) P_{i,j-1}(x) - (x - x_i) P_{i-1,j-1}(x)}{x_i - x_{i-j}},
+              \]
+              for \(i=0,\ldots,n\), \(j=1,\ldots,i\), with \(P_{i,0}(x) = y_i\).
+        \item \textbf{Numerical Stability:} For a fixed evaluation point \(x\), the recursive computation is numerically stable, as it avoids constructing the full polynomial.
+        \item \textbf{No Explicit Polynomial:} The algorithm yields only the value \(P_{n,n}(x)\) at the chosen \(x\); it does not construct or return the explicit polynomial \(p(x)\).
+        \item \textbf{Single-Point Evaluation:} Efficient for evaluating the interpolant at a single point, but for multiple points, the computation must be repeated for each \(x\).
+    \end{itemize}
+\end{property}
+
+\begin{algorithm}[H]
+    \caption{Neville's Algorithm}
+    \begin{algorithmic}[1]
+        \Require{Nodes \(x_0,\ldots,x_n\); values \(y_0,\ldots,y_n\); evaluation point \(x\)}
+        \Ensure{Interpolated value \(P_{n,n}(x)\)}
+        \For{\(i = 0\) to \(n\)}
+        \State \(P[i][0] \gets y_i\)
+        \EndFor
+        \For{\(j = 1\) to \(n\)}
+        \For{\(i = j\) to \(n\)}
+        \State \(P[i][j] \gets \frac{(x - x_{i-j}) P[i][j-1] - (x - x_i) P[i-1][j-1]}{x_i - x_{i-j}}\)
+        \EndFor
+        \EndFor
+        \State \Return \(P[n][n]\)
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{example}{Neville's Algorithm for Three Points}{neville-ex}
+    Given \((x_0, y_0), (x_1, y_1), (x_2, y_2)\), compute \(P_{2,2}(x)\):
+    \begin{align*}
+        P_{0,0}(x) & = y_0,                                                   \\
+        P_{1,0}(x) & = y_1,                                                   \\
+        P_{2,0}(x) & = y_2,                                                   \\
+        P_{1,1}(x) & = \frac{(x-x_0)y_1 - (x-x_1)y_0}{x_1-x_0},               \\
+        P_{2,1}(x) & = \frac{(x-x_1)y_2 - (x-x_2)y_1}{x_2-x_1},               \\
+        P_{2,2}(x) & = \frac{(x-x_0)P_{2,1}(x) - (x-x_2)P_{1,1}(x)}{x_2-x_0}.
+    \end{align*}
+\end{example}
+
+\begin{itemize}[nosep]
+    \item \textbf{Pros:} Simple, recursive, and numerically stable for evaluating at a single point; no need to construct the full polynomial.
+    \item \textbf{Cons:} Not efficient for evaluating at many points; does not provide an explicit polynomial form.
+\end{itemize}
+
+\subsection{Comparison and Practical Considerations}
+\begin{itemize}[nosep]
+    \item \textbf{Lagrange:} Simple formula, but expensive to update for new points.
+    \item \textbf{Newton:} Efficient for adding points (nested form), numerically stable for well-chosen nodes.
+    \item \textbf{Node choice:} Equally spaced nodes can cause large errors (Runge phenomenon); Chebyshev nodes minimize the maximum error.
+\end{itemize}
+
+\subsection{Error Analysis of Polynomial Interpolation}
+\subsubsection{Error Bound}
+If \(f \in C^{n+1}([a,b])\), the error at \(x\) is
+\[
+    f(x) - p(x) = \frac{f^{(n+1)}(\xi)}{(n+1)!} \prod_{i=0}^n (x - x_i), \quad \text{for some } \xi \in [a,b].
+\]
+
+\subsubsection{The Runge Phenomenon}
+A well-known issue in polynomial interpolation is the \emph{Runge phenomenon}, which refers to the large oscillations that can occur near the endpoints of an interval when interpolating with high-degree polynomials at equally spaced nodes. This effect was first observed by Carl Runge in 1901, who considered the function
+\[
+    f(x) = \frac{1}{1 + 25x^2}, \quad x \in [-1, 1].
+\]
+When interpolating \(f(x)\) at equally spaced nodes with increasing degree \(n\), the resulting polynomial oscillates more and more near the endpoints, and the interpolation error grows rapidly, even though the function itself is smooth. This demonstrates that simply increasing the number of nodes does not always improve the quality of polynomial interpolation.
+
+The Runge phenomenon is particularly severe for functions with high curvature near the endpoints or when using a large number of equally spaced nodes. The error bound for polynomial interpolation,
+\[
+    |f(x) - p(x)| \leq \frac{\max_{\xi \in [a,b]} |f^{(n+1)}(\xi)|}{(n+1)!} \prod_{i=0}^n |x - x_i|,
+\]
+shows that the product \(\prod_{i=0}^n |x - x_i|\) can become very large near the endpoints for equally spaced nodes.
+
+\begin{remark}{Chebyshev Nodes Mitigate Runge Phenomenon}{chebyshev-runge}
+    Using \emph{Chebyshev nodes}, which are clustered more densely near the endpoints, greatly reduces the oscillations and minimizes the maximum interpolation error. Chebyshev nodes on \([-1,1]\) are given by
+    \[
+        x_i = \cos\left(\frac{2i+1}{2n+2}\pi\right), \quad i = 0, \ldots, n.
+    \]
+    Interpolating at these nodes leads to much more stable and accurate results, even for large \(n\).
+\end{remark}
+
+\section{Spline Interpolation}
+Spline interpolation is a method for constructing smooth curves that pass through a set of data points. Instead of using a single high-degree polynomial, which can lead to oscillations and instability, splines use low-degree polynomials on each interval between data points. These polynomial segments are joined at the data points (called knots) in a way that ensures smoothness and continuity.
+
+\begin{definition}{Spline Interpolation}{spline-interpolation}
+    Let \(a = x_0 < x_1 < \cdots < x_n = b\) be a sequence of distinct points in \(\mathbb{R}\), called \emph{knots}, and let \(y_0, \ldots, y_n\) be given data values. The intervals \([x_{i-1}, x_i]\), for \(i = 1, \ldots, n\), are called \emph{subintervals}.
+
+    \emph{Spline interpolation} of degree \(k\) seeks a function \(s(x)\) such that:
+    \begin{itemize}
+        \item \textbf{Piecewise Polynomial:} On each subinterval \([x_{i-1}, x_i]\), \(S(x)\) belongs to the space of polynomials of degree at most \(k\), i.e.,
+              \begin{equation}
+                  s|_{[x_{i-1}, x_i]} \in \mathbb{P}_k, \quad i = 1, \ldots, n.
+              \end{equation}
+        \item \textbf{Smoothness:} \(s(x)\) and its derivatives up to order \(k-1\) are continuous on \([x_0, x_n]\), that is,
+              \begin{equation}
+                  s \in C^{k-1}([x_0, x_n]).
+              \end{equation}
+        \item \textbf{Interpolation:} \(S(x_i) = y_i\) for all \(i = 0, \ldots, n\), or
+              \begin{equation}
+                  s(x_i) = y_i, \quad i = 0, \ldots, n.
+              \end{equation}
+    \end{itemize}
+    The set of all such splines forms a vector space, often denoted by
+    \begin{equation}
+        \mathrm{S}_k(\{x_i\}) = \left\{ s \in C^{k-1}([x_0, x_n]) \,\middle|\, s|_{[x_{i-1}, x_i]} \in \mathbb{P}_k \text{ for } i=1,\ldots,n \right\}.
+    \end{equation}
+\end{definition}
+
+We also define the notion of \emph{Spline space} \(\mathcal{S}_n \subset C^{k-1}([x_0, x_n])\) as the space of all splines of degree \(k\) with knots \(x_0, \ldots, x_n\).
+
+\[
+    \mathcal{S}_n = \left\{ s \in C^{k-1}([x_0, x_n]) \,\middle|\, s|_{[x_{i-1}, x_i]} \in \mathbb{P}_k, \, s(x_i) = y_i \text{ for } i=0,\ldots,n \right\}.
+\]
+
+\begin{example}{Exam S2019: Problem 4 a)}{}
+    \textbf{Q:} Which two properties define the linear space of splines of degree \(k\) relative to the nodes (knots) \(x_0, \ldots, x_n\)?
+
+    \textbf{A:} The linear space of splines of degree \(k\) relative to the nodes (knots) \(x_0, \ldots, x_n\) is defined by the following two properties:
+
+    \begin{enumerate}[label=(\roman*)]
+        \item \textbf{Piecewise Polynomial:} On each interval \([x_{i-1}, x_i]\), the function is a polynomial of degree at most \(k\), i.e., \(S|_{[x_{i-1}, x_i]} \in \mathbb{P}_k\) for \(i = 1, \ldots, n\).
+        \item \textbf{Smoothness:} The function and its derivatives up to order \(k-1\) are continuous on the whole interval \([x_0, x_n]\), i.e., \(S \in C^{k-1}([x_0, x_n])\).
+    \end{enumerate}
+
+\end{example}
+
+\subsection{Piecewise Polynomial Splines}
+A piecewise polynomial spline is a function \(S(x)\) defined on an interval \([a, b]\) that is a polynomial of degree \(k\) on each subinterval \([x_{i-1}, x_i]\) for a sequence of knots \(a = x_0 < x_1 < \cdots < x_n = b\). The key requirement is that \(S(x)\) and its derivatives up to order \(k-1\) are continuous everywhere, ensuring a smooth overall curve. Piecewise linear splines (\(k=1\)) are continuous but not smooth at the knots, while cubic splines (\(k=3\)) are twice continuously differentiable and much smoother.
+\begin{definition}{Piecewise Polynomial Spline}{piecewise-spline}
+    A spline of degree \(k\) with knots \(x_0 < x_1 < \cdots < x_n\) is a function \(S(x)\) such that:
+    \begin{itemize}[nosep]
+        \item On each interval \([x_{i-1}, x_i]\), \(S(x)\) is a polynomial of degree at most \(k\).
+        \item \(S(x)\) and its derivatives up to order \(k-1\) are continuous on \([x_0, x_n]\).
+    \end{itemize}
+\end{definition}
+
+This construction allows for local control and avoids the oscillations (Runge phenomenon) seen in high-degree global polynomial interpolation. For example, piecewise linear splines (\(k=1\)) are continuous but not smooth at the knots, while cubic splines (\(k=3\)) are twice continuously differentiable and much smoother.
+
+\subsection{B-spline Basis}
+B-splines provide a set of basis functions for the space of splines of a given degree and knot sequence. Each B-spline basis function \(B_{i,k}(x)\) is nonzero only on a small interval, giving local control over the shape of the spline. The recursive Cox--de Boor formula defines these basis functions, and their properties (local support, partition of unity, non-negativity, and smoothness) make them ideal for both theory and applications. The figure above illustrates how quadratic B-spline basis functions overlap and sum to one at every \(x\).
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                width=0.8\textwidth,
+                height=5cm,
+                axis lines=left,
+                xlabel={\(x\)},
+                ylabel={\(B_{i,2}(x)\)},
+                xtick={0,1,2,3,4,5,6},
+                ytick={0,0.5,1},
+                ymin=0, ymax=1.1,
+                xmin=0, xmax=6,
+                legend style={at={(0.5,-0.15)},anchor=north,legend columns=4},
+                samples=200
+            ]
+            % Quadratic B-spline basis for knots 0,1,2,3,4,5,6
+            \addplot[thick,thm-color,domain=0:3] {((x>=0 && x<1) * (x/2)^2 + (x>=1 && x<2) * (1 - (x-1)/2)^2)};
+            \addlegendentry{\(B_{0,2}(x)\)}
+            \addplot[thick,thm-color!60!black,domain=1:4] {((x>=1 && x<2) * (2*(x-1)/2*(1-(x-1)/2)) + (x>=2 && x<3) * ((3-x)/2)^2)};
+            \addlegendentry{\(B_{1,2}(x)\)}
+            \addplot[thick,thm-color!30!black,domain=2:5] {((x>=2 && x<3) * (2*(x-2)/2*(1-(x-2)/2)) + (x>=3 && x<4) * ((4-x)/2)^2)};
+            \addlegendentry{\(B_{2,2}(x)\)}
+            \addplot[thick,thm-color!10!black,domain=3:6] {((x>=3 && x<4) * (2*(x-3)/2*(1-(x-3)/2)) + (x>=4 && x<5) * ((5-x)/2)^2)};
+            \addlegendentry{\(B_{3,2}(x)\)}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Quadratic (\(k=2\)) B-spline basis functions for uniform knots \(x_0=0,\ldots,x_6=6\). Each basis function is nonzero only on a small interval.}
+\end{figure}
+
+B-splines are widely used for interpolation, approximation, and geometric modeling. Their flexibility and stability make them a standard choice in computer graphics, CAD, and numerical solutions of differential equations.
+
+\subsection{Cubic Splines}
+Cubic splines are a popular method for numerical interpolation due to their smoothness and computational efficiency. They are piecewise cubic polynomials that ensure continuity of the function, its first derivative, and its second derivative across the interpolation interval.
+
+\begin{definition}{Cubic Spline}{cubic-spline}
+    A \emph{cubic spline} \(S(x)\) interpolating data points \((x_0, y_0), \ldots, (x_n, y_n)\) satisfies:
+    \begin{itemize}[nosep]
+        \item \(S(x_i) = y_i\) for all \(i\) (interpolates the data points).
+        \item \(S(x)\) is a cubic polynomial on each interval \([x_{i-1}, x_i]\).
+        \item \(S(x)\), \(S'(x)\), and \(S''(x)\) are continuous on \([x_0, x_n]\).
+    \end{itemize}
+    Additional boundary conditions are required to uniquely determine \(S(x)\):
+    \begin{itemize}[nosep]
+        \item \textbf{Natural spline:} \(S''(x_0) = S''(x_n) = 0\).
+        \item \textbf{Clamped spline:} \(S'(x_0)\) and \(S'(x_n)\) are specified.
+        \item \textbf{Not-a-knot:} The third derivative is continuous at \(x_1\) and \(x_{n-1}\).
+    \end{itemize}
+\end{definition}
+
+\subsubsection{General Form}
+On each interval \([x_{i-1}, x_i]\), the cubic spline \(S(x)\) is expressed as:
+\[
+    S_i(x) = a_i + b_i (x - x_{i-1}) + c_i (x - x_{i-1})^2 + d_i (x - x_{i-1})^3,
+\]
+where the coefficients \(a_i, b_i, c_i, d_i\) are determined by interpolation conditions, smoothness requirements, and boundary conditions.
+
+\subsubsection{Properties}
+\begin{property}{Properties of Cubic Splines}{cubic-spline-prop}
+    A cubic spline \(S(x)\) interpolating \((x_0, y_0), \ldots, (x_n, y_n)\) satisfies:
+    \begin{itemize}[nosep]
+        \item \textbf{Interpolation:} \(S(x_i) = y_i\) for all \(i\).
+        \item \textbf{Piecewise cubic:} \(S(x)\) is a cubic polynomial on each interval \([x_{i-1}, x_i]\).
+        \item \textbf{Smoothness:} \(S(x)\), \(S'(x)\), and \(S''(x)\) are continuous on \([x_0, x_n]\).
+        \item \textbf{Boundary conditions:} Imposed at \(x_0\) and \(x_n\) (e.g., natural, clamped, or not-a-knot).
+    \end{itemize}
+\end{property}
+
+\subsubsection{Construction Steps}
+The construction of cubic splines involves the following steps:
+\begin{enumerate}[nosep]
+    \item Impose interpolation conditions: \(S(x_i) = y_i\) for all \(i\).
+    \item Enforce continuity of \(S'(x)\) and \(S''(x)\) at interior knots.
+    \item Apply boundary conditions at \(x_0\) and \(x_n\) (e.g., \(S''(x_0) = S''(x_n) = 0\) for a natural spline).
+    \item Solve the resulting tridiagonal linear system for the second derivatives at the knots.
+    \item Use these second derivatives to compute the coefficients for each cubic polynomial piece.
+\end{enumerate}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+                width=0.6\textwidth,
+                height=5cm,
+                axis lines=left,
+                xlabel={\(x\)},
+                ylabel={\(y\)},
+                xtick={0,1,2,3,4},
+                ytick={0,1,2,3,4},
+                ymin=0, ymax=4,
+                xmin=0, xmax=4,
+                samples=200,
+                legend style={at={(0.5,-0.25)},anchor=north,legend columns=5,shape=rectangle, draw=none, fill=none,
+                        font=\small},
+                legend cell align=left,
+                legend style={column sep=1ex}
+            ]
+            % Data points
+            \addplot[only marks,mark=*,thick,spaceblack] coordinates {(0,1) (1,2.5) (2,2) (3,3.5) (4,2)};
+            \addlegendentry{Data points}
+            % Cubic spline (piecewise, passes through all points)
+            \addplot[thick,spaceblack,smooth] coordinates {
+                    (0,1)
+                    (1,2.5)
+                    (2,2)
+                    (3,3.5)
+                    (4,2)
+                };
+            \addlegendentry{Cubic spline}
+            % Piecewise linear
+            \addplot[thick,state-red,dashed] coordinates {(0,1) (1,2.5) (2,2) (3,3.5) (4,2)};
+            \addlegendentry{Piecewise linear}
+            % Knots (drawn as marks at y=0)
+            \addplot[only marks,mark=*,thick,state-orange,mark size=2pt] coordinates {(0,0) (1,0) (2,0) (3,0) (4,0)};
+            \addlegendentry{Knots}
+            % Control points (example: midpoints between knots, for illustration)
+            \addplot[only marks,mark=*,thick,state-sand,mark size=2pt] coordinates {(0.5,1.75) (1.5,2.25) (2.5,2.75) (3.5,2.75)};
+            \addlegendentry{Control points}
+
+            % Math annotations for data points
+            \node[anchor=south east, font=\small] at (axis cs:0,1) {\(\left(x_0, y_0\right)\)};
+            \node[anchor=south, font=\small] at (axis cs:1,2.5) {\(\left(x_1, y_1\right)\)};
+            \node[anchor=north, font=\small] at (axis cs:2,2) {\(\left(x_2, y_2\right)\)};
+            \node[anchor=south, font=\small] at (axis cs:3,3.5) {\(\left(x_3, y_3\right)\)};
+            \node[anchor=north west, font=\small] at (axis cs:4,2) {\(\left(x_4, y_4\right)\)};
+
+            % Math annotations for control points
+            \node[anchor=south east, font=\small] at (axis cs:0.5,1.75) {\(c_1\)};
+            \node[anchor=south, font=\small] at (axis cs:1.5,2.25) {\(c_2\)};
+            \node[anchor=south, font=\small] at (axis cs:2.5,2.75) {\(c_3\)};
+            \node[anchor=south west, font=\small] at (axis cs:3.5,2.75) {\(c_4\)};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Comparison of cubic spline interpolation (solid) and piecewise linear interpolation (dashed) through five data points. The cubic spline yields a smooth curve, while the piecewise linear interpolant is only continuous.}
+\end{figure}
+
+\begin{remark}{Computation of Cubic Splines}{cubic-spline-comp}
+    The coefficients of the cubic polynomials are found by solving a tridiagonal linear system arising from the continuity and interpolation conditions.
+\end{remark}
+
+\subsubsection{Explicit Construction of the Cubic Spline System}
+Let \(S(x)\) be a cubic spline interpolant for data \((x_0, y_0), \ldots, (x_n, y_n)\), with \(x_0 < x_1 < \cdots < x_n\). On each interval \([x_{i-1}, x_i]\), \(S(x)\) can be written as:
+\[
+    S_i(x) = a_i + b_i (x - x_{i-1}) + c_i (x - x_{i-1})^2 + d_i (x - x_{i-1})^3, \quad x \in [x_{i-1}, x_i].
+\]
+The coefficients \(a_i, b_i, c_i, d_i\) are determined by:
+\begin{enumerate}[nosep]
+    \item \textbf{Interpolation:} \(S_i(x_{i-1}) = y_{i-1}\), \(S_i(x_i) = y_i\).
+    \item \textbf{Smoothness:} \(S_i'(x_i) = S_{i+1}'(x_i)\), \(S_i''(x_i) = S_{i+1}''(x_i)\) for \(i=1,\ldots,n-1\).
+    \item \textbf{Boundary:} Two additional conditions, e.g., \(S''(x_0) = 0\) and \(S''(x_n) = 0\) (natural spline).
+\end{enumerate}
+Let \(h_i = x_i - x_{i-1}\) and \(m_i = S''(x_i)\). By differentiating \(S_i(x)\) and matching values and derivatives at the knots, one obtains the following tridiagonal system for the second derivatives:
+\[
+    h_{i-1} m_{i-1} + 2(h_{i-1} + h_i) m_i + h_i m_{i+1} = 6 \left( \frac{y_{i+1} - y_i}{h_{i+1}} - \frac{y_i - y_{i-1}}{h_i} \right), \quad i=1,\ldots,n-1.
+\]
+This system, together with the boundary conditions, uniquely determines \(m_0, \ldots, m_n\).
+
+\subsubsection{Variational Characterization of Cubic Splines}
+Cubic splines can also be characterized as the unique minimizer of the following variational problem:
+\[
+    S = \argmin_{g \in C^2([x_0, x_n]),\, g(x_i) = y_i} \int_{x_0}^{x_n} [g''(x)]^2 \, dx.
+\]
+That is, among all twice continuously differentiable functions interpolating the data, the cubic spline minimizes the \(L^2\) norm of the second derivative, making it the "smoothest" interpolant.
+
+\subsubsection{Existence and Uniqueness of Cubic Splines}
+A fundamental result is that, given \(n+1\) data points \((x_0, y_0), \ldots, (x_n, y_n)\) with \(x_0 < x_1 < \cdots < x_n\), and suitable boundary conditions, there exists a unique cubic spline \(S \in C^2([x_0, x_n])\) such that \(S(x_i) = y_i\) for all \(i\).
+
+\begin{theorem}{Existence and Uniqueness of Cubic Spline Interpolant}{cubic-spline-existence}
+    Let \(x_0 < x_1 < \cdots < x_n\) and \(y_0, \ldots, y_n \in \mathbb{R}\). Given boundary conditions (e.g., natural, clamped, or not-a-knot), there exists a unique function \(S \in C^2([x_0, x_n])\) such that:
+    \begin{align*}
+         & S(x_i) = y_i, \quad i=0,\ldots,n,                                    \\
+         & S|_{[x_{i-1}, x_i]} \text{ is a cubic polynomial for } i=1,\ldots,n, \\
+         & S', S'' \text{ are continuous on } [x_0, x_n].
+    \end{align*}
+\end{theorem}
+
+\subsubsection{Error Formula for Cubic Spline Interpolation}
+The error of cubic spline interpolation can be bounded in terms of the fourth derivative of the interpolated function.
+
+\begin{theorem}{Error Bound for Cubic Spline Interpolation}{cubic-spline-error}
+    Let \(f \in C^4([a,b])\) and let \(S\) be the cubic spline interpolant to \(f\) at the knots \(a = x_0 < x_1 < \cdots < x_n = b\). Then for \(x \in [x_{i-1}, x_i]\),
+    \[
+        f(x) - S(x) = -\frac{1}{384} h_i^4 f^{(4)}(\xi_x), \quad \text{for some } \xi_x \in [x_{i-1}, x_i],
+    \]
+    where \(h_i = x_i - x_{i-1}\).
+\end{theorem}
+

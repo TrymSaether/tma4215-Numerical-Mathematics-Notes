@@ -1,0 +1,256 @@
+\chapter{Orthogonal Polynomials}
+
+Orthogonal polynomials underpin Gaussian quadrature, spectral methods for differential equations, and least-squares data fitting.
+They provide numerically stable bases because their three-term recurrences avoid the ill-conditioning of raw monomials.
+Classical families such as Chebyshev or Legendre deliver nearly optimal approximation and interpolation properties that we exploit in later chapters.
+
+\section{General Setup}
+We consider an interval, usually $[-1,1]$, $[-\pi,\pi)$, $[0,\infty)$, or $\mathbb{R}$, and a weight function $w(x)$ with $w(x) > 0$ and integrable (possibly unbounded at endpoints). The inner product on function spaces is defined as
+\begin{equation}\label{eq:inner-product}
+    (f, g)_w := \int_{-1}^1 f(x)g(x)w(x)\,dx.
+\end{equation}
+This inner product is linear in the first argument, symmetric, and positive definite, and induces the norm $\|f\|_w := \sqrt{(f, f)_w}$. If $(f, g)_w = 0$, we say $f$ and $g$ are orthogonal with respect to $w$.
+
+\begin{example}{Monomials}{monomials}
+    Let $f(x) = x^k$, $g(x) = x^l$ on $[-1,1]$ with $w \equiv 1$. The monomials are orthogonal if $k \neq l$.
+    \begin{align*}
+        (x^k, x^l)_w & = \int_{-1}^1 x^{k+l}\,dx = \begin{cases}
+                                                       0               & \text{if } k+l \text{ odd},  \\
+                                                       \frac{2}{k+l+1} & \text{if } k+l \text{ even}.
+                                                   \end{cases}
+    \end{align*}
+    Thus, the monomials are orthogonal whenever $k \neq l$ because the integral vanishes when $k+l$ is odd.
+
+    Orthogonalizing the monomials by Gram-Schmidt yields bases with dramatically lower condition numbers than unscaled Vandermonde systems, making least-squares approximation numerically stable.
+\end{example}
+
+\begin{figure}[htbp!]
+    \centering
+    \includestandalone[width=0.7\textwidth]{figures/monomials-plot}
+    \caption{Monomials $x^2$, $x^3$, $x^4$, and $x^5$ on $[-1,1]$ with weight $w(x) = 1$.}
+    \label{fig:monomials-plot}
+\end{figure}
+\section{Orthogonal and Orthonormal Polynomials}
+\label{sec:orthogonal-polynomials}
+Let $\{p_0, p_1, \ldots\}$ be a sequence of polynomials with $\deg p_k = k$. Given an interval $I$ and weight $w$, the sequence is orthogonal if
+\[
+    (p_i, p_j)_w = 0 \quad \text{for } i \neq j.
+\]
+An orthonormal system is obtained by normalizing so that $\|p_k\|_w = 1$.
+
+\section{Construction of Orthogonal Polynomials via Gram-Schmidt}
+Orthogonalize $\{1, x, x^2, x^3, \ldots\}$ using \textbf{Gram-Schmidt}. Start with $p_0(x) = 1$.
+
+For $p_1(x)$, we start with the most general degree-1 polynomial,
+\[
+    p_1(x) = x + a_{1,0},
+\]
+and determine $a_{1,0}$ so that $p_1$ is orthogonal to $p_0$. Specifically, we require
+\begin{align*}
+    (p_0, p_1)_w               & = 0  \\
+    (1, x + a_{1,0})_w         & =    \\
+    (1, x)_w + a_{1,0}(1, 1)_w & = 0.
+\end{align*}
+Solving for $a_{1,0}$ gives
+\[
+    a_{1,0} = -\frac{(1, x)_w}{(1, 1)_w}.
+\]
+Continue this process for higher degrees, always ensuring:
+\begin{itemize}
+    \item We choose the monic normalization, i.e., $p_k(x)=x^k+\cdots$ (leading coefficient1),
+    \item Orthogonality: $(p_j, p_k)_w = 0$ for $j \neq k$,
+    \item Degree: $\deg p_k = k$.
+\end{itemize}
+Thus, $\Pi_n = \operatorname{span}\{1, x, \ldots, x^n\} = \operatorname{span}\{p_0, p_1, \ldots, p_n\}$.
+
+\section{Generalized Fourier Series}
+Let $L^2_w = \{f : \|f\|_w^2 = \int_{-1}^1 f^2(x)w(x)\,dx < \infty\}$. For $f \in L^2_w$, we can expand
+\[
+    S f = \sum_{k=0}^\infty \hat{f}_k p_k, \quad \text{where} \quad \hat{f}_k = \frac{(f, p_k)_w}{(p_k, p_k)_w}.
+\]
+The partial sum $f_n(x) = S_n f(x) := \sum_{k=0}^n \hat{f}_k p_k$ converges in $L^2_w$-norm to $f$ as $n \to \infty$. By Bessel's inequality (and Parseval's identity when the series converges), these coefficients guarantee $\|f - S_n f\|_w \to 0$ as $n\to\infty$.
+
+\begin{theorem}{Best Approximation in $L^2_w$}{best-approximation}
+    The truncated generalized Fourier series $f_n(x) = S_n f(x) = \sum_{k=0}^n \hat{f}_k p_k$ is the best approximation in $\|\cdot\|_w$ with respect to $P_n$, i.e.,
+    \[
+        \|f_n - f\|_w = \min_{q \in P_n} \|f - q\|_w.
+    \]
+\end{theorem}
+\begin{proof}
+    For any $q \in P_n$, write $q = \sum_{k=0}^n \hat{q}_k p_k$. Then,
+    \[
+        f - q = (f - f_n) + (f_n - q) = (f - f_n) + \sum_{k=0}^n (\hat{f}_k - \hat{q}_k) p_k.
+    \]
+    Since $f - f_n$ is orthogonal to $P_n$, we have $(f - f_n, q)_w = 0$ for all $q \in P_n$. Therefore,
+    \[
+        \|f - q\|_w^2 = \|f - f_n\|_w^2 + \|f_n - q\|_w^2 \geq \|f - f_n\|_w^2,
+    \]
+    with equality if and only if $q = f_n$. Thus, $f_n$ is the unique best approximation in $P_n$.
+    Uniqueness follows from the strict convexity of the $L^2$-norm.
+\end{proof}
+
+\subsection{Three-Term Recursion}
+\label{subsec:three-term}
+
+Orthogonal polynomials can be constructed recursively using a simple three-term relation. Starting with $p_0(x)$ and $p_1(x)$, we compute $p_n(x)$ for $n \geq 2$ as follows:
+
+\[
+    p_n(x) = x p_{n-1}(x) - \sum_{k=0}^{n-1} a_{n,k} p_k(x),
+\]
+
+where the coefficients $a_{n,k}$ are chosen to ensure orthogonality. Specifically, we require:
+
+\[
+    (p_n, p_j)_w = 0 \quad \text{for all } j < n.
+\]
+
+This condition simplifies to:
+
+\[
+    a_{n,j} = \frac{(x p_{n-1}, p_j)_w}{(p_j, p_j)_w}, \quad j = 0, \ldots, n-1.
+\]
+
+In practice, most of these coefficients vanish due to orthogonality, leaving only two nonzero terms: $a_{n,n-1}$ and $a_{n,n-2}$. This leads to the efficient three-term recursion:
+
+\[
+    p_{n+1}(x) = (x - \alpha_n) p_n(x) - \beta_n p_{n-1}(x),
+\]
+
+where the coefficients are given by:
+
+\[
+    \alpha_n = \frac{(x p_n, p_n)_w}{(p_n, p_n)_w}, \quad \beta_n = \frac{(p_n, p_n)_w}{(p_{n-1}, p_{n-1})_w}.
+\]
+
+This recursive approach is widely used for constructing orthogonal polynomial systems efficiently.
+
+\begin{remark}{Efficiency of Three-Term Recursion}{three-term-recursion}
+Three-term recurrences compute $p_{n+1}$ from $p_n$ and $p_{n-1}$ in $\mathcal{O}(n)$ arithmetic, avoiding the full Gram-Schmidt cost and rounding-error accumulation.
+\end{remark}
+
+\section{Zeros of Orthogonal Polynomials}
+\label{sec:zeros}
+
+\begin{theorem}{Real Zeros of Functions}{real-zeros}
+    Let $f \in \mathcal{C}([a,b])$, $f \not\equiv 0$, and $n \in \mathbb{N}$ be given. Assume that
+    \[
+        (f, p)_w = 0 \quad \text{for all } p \in P_{n-1}.
+    \]
+    (In particular, we could take $f = p_n$.) Then $f$ changes sign at least $n$ times on $[a,b]$; that is, $f$ has at least $n$ real zeros.
+\end{theorem}
+
+\begin{proof}
+    Let $f \in \mathcal{C}([a,b])$, $f \not\equiv 0$, and assume $(f, p)_w = 0$ for all $p \in P_{n-1}$.
+    This means $f$ is orthogonal to all polynomials of degree less than $n$ with respect to the weight $w(x)$.
+
+    \begin{enumerate}
+        \item Suppose $f$ does not change sign at least $n$ times. Then $f(x)$ can be expressed as $f(x) = g(x) h(x)$, where $g(x) \in P_{n-1}$ and $h(x)$ is a non-negative function that does not change sign.
+        \item Consider the inner product:
+              \[
+                  (f, g)_w = \int_a^b g^2(x) h(x) w(x)\,dx.
+              \]
+        \item Since $g^2(x) \geq 0$ and $h(x) \geq 0$, the integral $(f, g)_w \geq 0$.
+        \item This contradicts the assumption that $(f, p)_w = 0$ for all $p \in P_{n-1}$ unless $f \equiv 0$, which is excluded by hypothesis.
+        \item[$\Rightarrow$] Therefore, $f$ must change sign at least $n$ times on $[a,b]$ and has at least $n$ real zeros.
+    \end{enumerate}
+\end{proof}
+
+\section{Chebyshev Polynomials}
+On $[-1,1]$ with weight $w(x) = \frac{1}{\sqrt{1-x^2}}$, the Chebyshev polynomials are defined by
+\[
+    T_k(x) = \cos(k \arccos x), \quad x = \cos \theta.
+\]
+They satisfy the recurrence
+\[
+    T_0(x) = 1, \quad T_1(x) = x, \quad T_{k+1}(x) = 2x T_k(x) - T_{k-1}(x).
+\]
+\begin{property}{Properties of Chebyshev Polynomials}{chebyshev-properties}
+    \begin{itemize}
+        \item $T_k$ is even for even $k$, odd for odd $k$.
+        \item $|T_k(x)| \leq 1$ for $x \in [-1,1]$.
+        \item Orthogonality:
+              \[
+                  (T_k, T_l)_w = \int_{-1}^1 T_k(x) T_l(x)\,\frac{w(x)\,dx}{\sqrt{1-x^2}},\quad w(x)=\frac{1}{\sqrt{1-x^2}} =
+                  \begin{cases}
+                      0             & k \neq l,  \\
+                      \pi           & k = l = 0, \\
+                      \frac{\pi}{2} & k = l > 0.
+                  \end{cases}
+              \]
+        \item \emph{Minimax property:} $T_k$ minimizes the uniform norm among all monic polynomials of degree $k$; hence $\|T_k\|_\infty=1$ on $[-1,1]$.
+    \end{itemize}
+\end{property}
+
+\begin{figure}[htbp!]
+    \centering
+    \includestandalone[width=0.6\textwidth]{figures/chebyshev-plot}
+    \caption{Chebyshev polynomials $T_0$ to $T_4$ on $[-1,1]$.}
+    \label{fig:chebyshev-plot}
+\end{figure}
+
+\section{Legendre Polynomials}
+On $[-1,1]$ with $w(x) \equiv 1$, the Legendre polynomials satisfy
+
+\[
+    P_0(x) = 1, \quad P_1(x) = x,
+\]
+
+and the recurrence
+
+\[
+    (n+1) P_{n+1}(x) = (2n+1) x P_n(x) - n P_{n-1}(x).
+\]
+
+Using normalized polynomials ($P_n(1)=1$):
+
+\begin{equation}\label{eq:legendre-rec}
+    P_{n+1}(x)=\frac{2n+1}{n+1}xP_n(x)-\frac{n}{n+1}P_{n-1}(x).
+\end{equation}
+
+\begin{property}{Properties of Legendre Polynomials}{legendre-properties}
+    \begin{itemize}
+        \item $P_n(x)$ is an even function for even $n$ and an odd function for odd $n$.
+        \item Orthogonality:
+              \[
+                  (P_k, P_l)_w = \int_{-1}^1 P_k(x) P_l(x)\,dx =
+                  \begin{cases}
+                      0              & \text{if } k \neq l, \\
+                      \frac{2}{2k+1} & \text{if } k = l.
+                  \end{cases}
+              \]
+    \end{itemize}
+\end{property}
+
+\begin{figure}[htbp!]
+    \centering
+    \includestandalone[width=0.6\textwidth]{figures/legendre-plot}
+    \caption{Legendre polynomials $P_0$ to $P_5$ on $[-1,1]$.}
+    \label{fig:legendre-plot}
+\end{figure}
+
+\section{Jacobi Polynomials}
+\label{sec:jacobi-polynomials}
+A broad family of orthogonal polynomials on $[-1,1]$ is given by the \textbf{Jacobi polynomials} $P_n^{(\alpha,\beta)}(x)$, which are orthogonal with respect to the weight
+\[
+    w(x) = (1-x)^\alpha (1+x)^\beta, \qquad \alpha, \beta > -1.
+\]
+Many classical polynomials are special cases of Jacobi polynomials:
+\begin{itemize}
+    \item \textbf{Legendre polynomials:} $\alpha = \beta = 0$,
+    \item \textbf{Chebyshev polynomials:} $\alpha = \beta = -\dfrac{1}{2}$.
+\end{itemize}
+
+Jacobi polynomials satisfy a three-term recurrence relation (see \autoref{subsec:three-term}), with coefficients depending on $\alpha$ and $\beta$:
+\begin{align*}
+    P_0^{(\alpha,\beta)}(x)     & = 1,                                                                                                                                                \\
+    P_1^{(\alpha,\beta)}(x)     & = \frac{1}{2} \big[2(\alpha+1) + (\alpha+\beta+2)(x-1)\big],                                                                                        \\
+    P_{n+1}^{(\alpha,\beta)}(x) & = \tfrac{(2n+\alpha+\beta+1)\big[(2n+\alpha+\beta)(2n+\alpha+\beta+2)x + \alpha^2 - \beta^2\big]}{2(n+1)(n+\alpha+\beta+1)} P_n^{(\alpha,\beta)}(x)
+    - \tfrac{2(n+\alpha)(n+\beta)(2n+\alpha+\beta+2)}{2(n+1)(n+\alpha+\beta+1)(2n+\alpha+\beta)} P_{n-1}^{(\alpha,\beta)}(x).
+\end{align*}
+
+\begin{figure}[htbp!]
+    \centering
+    \includestandalone[width=0.6\textwidth]{figures/jacobi-plot}
+    \caption{Surface plot of the Jacobi polynomial $P_2^{(\alpha,0)}(x)$ as a function of $x$ and $\alpha$.}
+    \label{fig:jacobi-plot}
+\end{figure}

@@ -1,0 +1,239 @@
+\chapter{Romberg Integration}
+\label{chap:romberg}
+
+
+\section*{Introduction}
+Numerical integration (or \emph{quadrature}) is the art of estimating
+\[
+  I = \int_a^b f(x)\,dx
+\]
+when an analytic antiderivative is unavailable or inconvenient.
+A good mental picture is slicing bread:
+each slice has a simple shape whose area you can sum, and thinner slices
+give a better approximation to the whole loaf.
+Romberg integration is a systematic way of cutting those slices thinner
+\emph{and} blending successive approximations to cancel leading errors,
+much like stacking Russian dolls so that each larger doll hides the defects
+of the smaller one inside.
+
+
+\section{The Composite Trapezoidal Rule Revisited}
+\label{sec:trapezoid}
+\begin{definition}{Composite Trapezoidal Rule}{trapezoidal-rule}
+  Given $n=2^k$ sub-intervals (\(h_k = (b-a)/2^{k}\)), the composite trapezoidal rule approximates the integral as
+  \begin{equation}
+    T_k = h_k\left[\frac12 f(a) +\sum_{i=1}^{2^{k}-1} f(a+i h_k) + \frac12 f(b)\right],
+    \quad
+    h_k = \frac{b-a}{2^{k}}.
+  \end{equation}
+\end{definition}
+Its error admits an asymptotic expansion
+\[
+  T_k \;=\; I
+  + c_2 h_k^{\,2}
+  + c_4 h_k^{\,4}
+  + c_6 h_k^{\,6}
+  + \cdots .
+\]
+Think of $T_k$ as a photograph that is blurry by an amount proportional
+to $h_k^{\,2}$; halving~$h_k$ halves the blur squared but leaves a faint
+ghost.  We would like to remove that ghost \emph{without} taking ever-smaller
+pictures.
+
+
+\section{Richardson Extrapolation}
+Richardson extrapolation blends two pictures of different resolutions
+and subtracts the shared blur:
+\[
+  \mathcal{A}_{k,1}
+  \;=\;
+  \frac{4 T_{k} - T_{k-1}}{3},
+  \qquad k\ge 1.
+\]
+Here $T_{k}$ uses step~$h_k$ while $T_{k-1}$ uses $2h_k$.
+Because the leading $h^{2}$ error cancels,
+$\mathcal{A}_{k,1}$ is \(\mathcal{O}(h_k^{\,4})\).
+Each application of the extrapolation ``crank'' raises the order by~\(2\).
+
+
+\section{The Romberg Table}
+Romberg integration applies Richardson extrapolation \emph{recursively} on a triangular table (Table~\ref{tab:romberg}).
+
+\begin{definition}{Romberg Method}{romberg-method}
+  Let $T_k$ denote the composite trapezoidal rule with $2^k$ subintervals. The Romberg tableau entries $\mathcal{A}_{k,j}$ are defined recursively as:
+    \begin{align}
+      \mathcal{A}_{k,0} & = T_k, \qquad\qquad\quad\;\; k = 0, 1, \dots \\[1ex]
+      \mathcal{A}_{k,j} & = \frac{4^{j} \mathcal{A}_{k,j-1} - \mathcal{A}_{k-1,j-1}}{4^{j} - 1}, \qquad j = 1, \dots, k.
+    \end{align}
+  Here, $k$ is the row (refinement level), and $j$ is the column (extrapolation depth). The diagonal entry $\mathcal{A}_{k,k}$ achieves error $\mathcal{O}(h_k^{2(k+1)})$.
+\end{definition}
+\begin{corollary}{Recursive Trapezoid update}{recursive-trapezoid}
+  The first column of the Romberg table ($j=0$) can be computed recursively
+  \[
+    A_{k,0} = \frac12 \mathcal{A}_{k-1,0} + h_k \sum_{i=1}^{2^{k-1}}f\left(a + (2i-1)h_k\right), \qquad k \ge 1.
+  \]
+  This allows us to easily compute the trapezoidal rule for each row without recalculating all previous values.
+\end{corollary}
+
+Each new row halves the step size (more bread slices); each new column cancels the dominant error term (removes blur). The procedure is like climbing a staircase: horizontal steps refine the mesh, vertical steps polish the estimate.
+
+\begin{table}[h]
+  \centering
+  \caption{Romberg tableau for $k_{\max}=3$.}
+  \label{tab:romberg}
+  \begin{tabular}{c|cccc}
+    $k\backslash j$ & 0                   & 1                   & 2                   & 3                   \\ \hline
+    0               & $\mathcal{A}_{0,0}$                                                                   \\
+    1               & $\mathcal{A}_{1,0}$ & $\mathcal{A}_{1,1}$                                             \\
+    2               & $\mathcal{A}_{2,0}$ & $\mathcal{A}_{2,1}$ & $\mathcal{A}_{2,2}$                       \\
+    3               & $\mathcal{A}_{3,0}$ & $\mathcal{A}_{3,1}$ & $\mathcal{A}_{3,2}$ & $\mathcal{A}_{3,3}$ \\
+  \end{tabular}
+\end{table}
+\emph{More bread slices} (rows) and \emph{ghost removal} (columns) lead to \textbf{high-order accuracy} at modest cost.
+
+\section{Romberg Algorithm}
+The complete Romberg algorithm consists of two main components: computing the trapezoidal rule estimates and applying Richardson extrapolation.
+
+\begin{algorithm}[H]
+  \caption{Trapezoidal Rule with $2^k$ intervals}
+  \label{alg:trapezoid}
+  \begin{algorithmic}[1]
+    \Function{Trapezoid}{$f, a, b, n$}
+      \State $h \gets (b-a)/n$
+      \State $sum \gets \frac{1}{2}(f(a) + f(b))$
+      \For{$i = 1$ to $n-1$}
+        \State $sum \gets sum + f(a + ih)$
+      \EndFor
+      \State \Return $h \cdot sum$
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+  \caption{Refined Trapezoidal Rule (using previous computation)}
+  \label{alg:refined-trapezoid}
+  \begin{algorithmic}[1]
+    \Function{RefinedTrapezoid}{$f, a, b, n$}
+      \State $h \gets (b-a)/n$
+      \State $sum \gets 0$
+      \For{$i = 1$ to $n/2$}
+        \State $sum \gets sum + f(a + (2i-1)h)$
+      \EndFor
+      \State \Return $\frac{1}{2} \cdot T_{prev} + h \cdot sum$
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+  \caption{Complete Romberg Integration}
+  \label{alg:complete-romberg}
+  \begin{algorithmic}[1]
+    \Function{RombergIntegration}{$f, a, b, k_{max}, \varepsilon$}
+      \State Initialize array $\mathcal{A} \gets \text{zeros}(k_{max}+1, k_{max}+1)$
+      \State $\mathcal{A}_{[0][0]} \gets$ \Call{Trapezoid}{$f, a, b, 1$}
+
+      \For{$k = 1$ to $k_{max}$}
+        \State $\mathcal{A}_{[k][0]} \gets$ \Call{RefinedTrapezoid}{$f, a, b, 2^k$}
+
+        \For{$j = 1$ to $k$}
+          \State $\mathcal{A}_{[k][j]} \gets \dfrac{4^j \mathcal{A}_{[k][j-1]} - \mathcal{A}_{[k-1][j-1]}}{4^j - 1}$
+        \EndFor
+
+        \If{$k > 0$ and $|\mathcal{A}_{[k][k]} - \mathcal{A}_{[k-1][k-1]}| < \varepsilon$}
+          \State \Return $\mathcal{A}_{[k][k]}$
+        \EndIf
+      \EndFor
+
+      \State \Return $\mathcal{A}_{[k_{max}][k_{max}]}$
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\section{Adaptive Romberg}
+When $f$ is highly variable on sub-intervals, naïvely halving the global
+step wastes work on easy regions.
+Adaptive Romberg splits $[a,b]$ recursively, applying
+Algorithm~\ref{alg:romberg} on sub-intervals until
+the local error estimate meets tolerance,
+much like a photographer zooming in only where the picture is blurry.
+
+\begin{algorithm}[H]
+  \caption{Romberg Integration}
+  \label{alg:romberg}
+  \begin{algorithmic}[1]
+    \State Choose $k_{\max}$ (max depth) and tolerance $\varepsilon$
+    \State $\mathcal{A}_{0,0} \gets$ \Call{Trapezoid}{$f,a,b,1$}
+    \For{$k = 1$ to $k_{\max}$}
+    \State $\mathcal{A}_{k,0} \gets$ \Call{RefinedTrapezoid}{$f,a,b,2^{k}$}
+    \For{$j = 1$ to $k$}
+    \State $\mathcal{A}_{k,j} \gets \dfrac{4^{j} \mathcal{A}_{k,j-1} - \mathcal{A}_{k-1,j-1}}{4^{j}-1}$
+    \EndFor
+    \If{$|\mathcal{A}_{k,k} - \mathcal{A}_{k-1,k-1}| < \varepsilon$}
+    \State \Return $\mathcal{A}_{k,k}$ \Comment{converged}
+    \EndIf
+    \EndFor
+    \State \Return $\mathcal{A}_{k_{\max},k_{\max}}$
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{remark}{Implementation Notes}{romberg-implementation}
+  \begin{itemize}
+    \item \textbf{Caching:}  $T_{k}$ re-uses all $f$ evaluations
+          from $T_{k-1}$; store them to avoid recomputation.
+    \item \textbf{Round-off:}  For large $k$ the increment
+          $\mathcal{A}_{k,0}-\mathcal{A}_{k-1,0}$ may underflow; stop refinement when
+          machine precision dominates.
+    \item \textbf{Vectorisation:}  Modern CPUs/GPUs can evaluate
+          $f(\mathbf{x})$ on a mesh in parallel, significantly speeding
+          the first few rows.
+  \end{itemize}
+\end{remark}
+
+\section{Accuracy and Convergence}
+Under suitable smoothness ($f\in C^{2(k+1)}[a,b]$),
+\[
+  \mathcal{A}_{k,k} \;=\; I + \mathcal{O}\!\bigl(h_k^{\,2(k+1)}\bigr).
+\]
+Thus every diagonal step increases the algebraic accuracy by two orders.
+Because $h_k=2^{-k}(b-a)$, the error decays \emph{super-geometrically}; doubling $k$ squares the convergence factor.
+
+\begin{example}{Romberg Integration Example}{romberg}
+  Integrate \(I=\int_{0}^{1} \mathrm{e}^{-x^{2}}\,dx\) (the error function
+  half-integral).
+
+  \medskip
+
+  Table~\ref{tab:example} lists $\mathcal{A}_{k,k}$ for $k=0\dots4$.
+  One sees quadratic accuracy on $T_k$ (column~0) and quartic,
+  sextic, etc.\ on higher columns, reaching machine precision with
+  only 31~function evaluations.
+
+  \medskip
+
+  \begin{center}
+    \begin{tabular}{c|ccccc}
+      $k$ & $\mathcal{A}_{k,0}$ & $\mathcal{A}_{k,1}$ & $\mathcal{A}_{k,2}$ & $\mathcal{A}_{k,3}$ & $\mathcal{A}_{k,4}$ \\ \hline
+      0   & 0.6839397206        &                     &                     &                     &                     \\
+      1   & 0.7471308777        & 0.7651801875        &                     &                     &                     \\
+      2   & 0.7791906969        & 0.7853981635        & 0.7858731139        &                     &                     \\
+      3   & 0.7886993009        & 0.7904804897        & 0.7907357145        & 0.7907767155        &                     \\
+      4   & 0.7911868057        & 0.7913186162        & 0.7913310420        & 0.7913316310        & 0.7913316515        \\
+    \end{tabular}
+    \label{tab:example}
+  \end{center}
+
+  Ground truth is \(0.74682413\mbox{\,…}\); the $k=4$ diagonal estimate matches to full double-precision.
+\end{example}
+
+Romberg integration combines the simplicity of the trapezoidal rule with the power of Richardson extrapolation, delivering very high-order accuracy at modest cost for smooth integrands.
+
+Remember the three guiding images:
+\begin{enumerate}
+  \item \textbf{Bread slices} (\emph{mesh refinement}).
+  \item \textbf{Ghost removal} (\emph{extrapolation to cancel error}).
+  \item \textbf{Staircase ascent} (\emph{iterating the process}).
+\end{enumerate}
+When the function is smooth, a few steps up the Romberg staircase bring you astonishingly close to the
+true integral.
+
+

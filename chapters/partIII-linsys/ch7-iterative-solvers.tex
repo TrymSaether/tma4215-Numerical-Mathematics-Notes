@@ -1,0 +1,324 @@
+\chapter{Iterative Methods for Solving Linear Systems}
+Iterative methods approximate solutions to the linear system
+\begin{equation}
+    A\mathbf{x} = \mathbf{b},
+    \label{eq:linsys}
+\end{equation}
+This approach is particularly useful when direct methods are too expensive for large or sparse systems. Rather than solving for \(\mathbf{x}\) in one step, we begin with an initial guess \(\mathbf{x}^{(0)}\) and generate a sequence of improved approximations: \(\mathbf{x}^{(1)}, \mathbf{x}^{(2)}, \ldots\), with the goal that these iterates converge to the true solution \(\mathbf{x} = A^{-1}\mathbf{b}\).
+
+Since the exact solution \(\mathbf{x}\) is unknown, we cannot directly compute the true error,
+\begin{equation}
+    \mathbf{e}^{(k)} = \mathbf{x}^{(k)} - \mathbf{x}.
+\end{equation}
+
+Instead, we monitor the \emph{residual} at each iteration as a practical indicator of accuracy:
+\begin{equation}
+    \mathbf{r}^{(k)} = \mathbf{b} - A\mathbf{x}^{(k)}.
+\end{equation}
+The residual measures how well the current iterate satisfies the system.
+If \(\mathbf{r}^{(k)} = 0\), then \(\mathbf{x}^{(k)}\) is an exact solution; if the residual is small, our approximation is close to solving \(A\mathbf{x} = \mathbf{b}\).
+
+For a dense \(n \times n\) matrix, each iteration of an iterative method requires approximately \(n^2\) operations, compared to the \(\mathcal{O}(n^3)\) cost of direct methods. Iterative approaches are therefore advantageous when convergence is achieved in significantly fewer than \(n\) iterations.
+For large, sparse matrices, direct methods can become impractical due to fill-in, which increases memory and computational requirements. In such cases, iterative methods are often preferable, unless the matrix has special structure that enables efficient direct solvers.
+Additionally, \emph{preconditioning} can be used to accelerate convergence, especially when \(A\) is ill-conditioned.
+
+\section{Convergence of Iterative Methods}
+\label{sec:iterative-convergence}
+The basic idea behind iterative methods is that we seek a sequence \(\mathbf{x}^{(k)}\) such that it converges towards our true solution \(\mathbf{x} = A^{-1}\mathbf{b}\) as \(k\) increases.
+\begin{equation}
+    \mathbf{x} = \lim_{k \to \infty} \mathbf{x}^{(k)},
+\end{equation}
+where \(A\mathbf{x} = \mathbf{b}\). In practice, we stop when \(\|\mathbf{x}^{(k)} - \mathbf{x}\| < \varepsilon\), but since \(\mathbf{x}\) is unknown, we monitor \(\|\mathbf{r}^{(k)}\|\) or similar criteria.
+
+A common framework for iterative methods is to rewrite \(A\mathbf{x} = \mathbf{b}\) in the form:
+\[
+    \mathbf{x}^{(k+1)} = B\mathbf{x}^{(k)} + \mathbf{f},
+\]
+where \(B\) is the iteration matrix and \(\mathbf{f}\) is derived from \(\mathbf{b}\).
+
+\begin{definition}{Consistent Iteration Method}{consistent-iteration}
+    An iterative method of the form above is said to be \emph{consistent} with \(A\mathbf{x} = \mathbf{b}\) if \(B\) and \(\mathbf{f}\) are such that
+    \begin{equation}
+        \mathbf{x} = B\mathbf{x} + \mathbf{f}
+        \quad \Longleftrightarrow \quad
+        \mathbf{f} = (I - B)A^{-1}\mathbf{b}.
+    \end{equation}
+\end{definition}
+
+Let the error at the \(k\)-th step be
+\begin{equation}
+    \mathbf{e}^{(k)} = \mathbf{x}^{(k)} - \mathbf{x}.
+\end{equation}
+The condition for convergence is that
+\[
+    \lim_{k \to \infty} \mathbf{e}^{(k)} = 0
+\]
+for any choice of the initial guess \(\mathbf{x}^{(0)}\).
+
+Consistency alone does not guarantee convergence; additional conditions on \(B\) are required to ensure that the error vanishes as \(k \to \infty\).
+
+\section{Linear Iterative Methods}
+A general approach to constructing consistent linear iterative methods is based on an additive splitting of the matrix \(A\) as \(A = P - N\), where \(P\) and \(N\) are suitable matrices and \(P\) is nonsingular.
+
+The matrix \(P\) is called the \emph{preconditioning matrix} or \emph{preconditioner}.
+
+Given an initial guess \(\mathbf{x}^{(0)}\), the iterates \(\mathbf{x}^{(k)}\) for \(k \geq 1\) are computed by solving
+\begin{equation}
+    P\mathbf{x}^{(k+1)} = N\mathbf{x}^{(k)} + \mathbf{b}, \quad k \geq 0. \label{eq:linsys-splitting}
+\end{equation}
+
+The iteration matrix for this method is \(B = P^{-1}N\), and \(\mathbf{f} = P^{-1}\mathbf{b}\). Alternatively, \eqref{eq:linsys-splitting} can be written as
+\begin{equation}
+    \mathbf{x}^{(k+1)} = \mathbf{x}^{(k)} + P^{-1}\mathbf{r}^{(k)},
+    \label{eq:linsys-splitting-residual}
+\end{equation}
+where
+\begin{equation}
+    \mathbf{r}^{(k)} = \mathbf{b} - A\mathbf{x}^{(k)}
+\end{equation}
+is the residual at step \(k\).
+This formulation highlights that a linear system with coefficient matrix \(P\) must be solved at each iteration. Thus, \(P\) should be not only nonsingular but also easy to invert, to keep the computational cost low.
+(If \(P = A\) and \(N = 0\), the method converges in one step, but at the cost of a direct method.)
+
+
+Classical linear iterative methods can be derived from specific choices of \(P\) and \(N\).
+If the diagonal entries of \(A\) are nonzero, each equation can be rewritten as
+\begin{equation}
+    x_i = \frac{1}{a_{ii}}\left(b_i - \sum_{j=1,\,j\neq i}^n a_{ij} x_j\right), \quad i = 1,\ldots,n.
+\end{equation}
+
+\paragraph{Notation}
+Let \(D\) denote the diagonal part of \(A\), \(L\) the strictly lower triangular part, and \(U\) the strictly upper triangular part. Thus,
+\[
+    A = D + L + U,
+\]
+where
+\[
+    D_{ij} = \diag(a_{ij}),
+    \qquad
+    L_{ij} = \begin{cases}
+        a_{ij}, & \text{if } i > j, \\
+        0,      & \text{otherwise},
+    \end{cases}
+    \qquad
+    U_{ij} =
+    \begin{cases}
+        a_{ij}, & \text{if } i < j, \\
+        0,      & \text{otherwise}.
+    \end{cases}
+\]
+
+\begin{theorem}{Convergence Criterion for Linear Iterative Methods}{convergence-criterion}
+    Let \(A\) be a nonsingular matrix and consider a linear iterative method of the form
+    \[
+        \mathbf{x}^{(k+1)} = B\mathbf{x}^{(k)} + \mathbf{f},
+    \]
+    where \(B\) is the iteration matrix. The method converges for any initial guess \(\mathbf{x}^{(0)}\) if and only if the spectral radius of \(B\) satisfies
+    \[
+        \rho(B) < 1,
+    \]
+    where \(\rho(B)\) is the largest absolute value of the eigenvalues of \(B\).
+\end{theorem}
+\begin{proof}
+    The error at step \(k\) is \(\mathbf{e}^{(k)} = B^k \mathbf{e}^{(0)}\). The sequence \(\mathbf{e}^{(k)}\) converges to zero for all initial errors \(\mathbf{e}^{(0)}\) if and only if \(\lim_{k\to\infty} B^k = 0\), which holds if and only if \(\rho(B) < 1\).
+\end{proof}
+
+\subsection{Stationary Iterative Methods}
+
+Stationary iterative methods are a class of linear iterative methods where the iteration matrix \(B\) is fixed and does not depend on the current iterate \(\mathbf{x}^{(k)}\). These methods are particularly useful for large sparse systems, as they can be implemented efficiently.
+\begin{definition}{Stationary Iterative Method}{stationary-iterative}
+    A stationary iterative method for solving \(A\mathbf{x} = \mathbf{b}\) is defined by the iteration
+    \begin{equation}
+        \mathbf{x}^{(k+1)} = B\mathbf{x}^{(k)} + \mathbf{f},
+        \label{eq:stationary-iterative}
+    \end{equation}
+    where \(B\) is a fixed matrix and \(\mathbf{f}\) is a constant vector derived from \(\mathbf{b}\).
+    The method is called \emph{stationary} because the iteration matrix \(B\) does not change with \(k\).
+\end{definition}
+
+
+\subsection{Jacobi Method}
+The Jacobi method is one of the simplest stationary iterative methods for solving \eqref{eq:linsys}.
+The method updates all components of \(\mathbf{x}\) simultaneously using only values from the previous iteration.
+
+\begin{definition}{Jacobi Method}{jacobi-method}
+    The Jacobi method uses the splitting \(P = D\) and \(N = L + U\), leading to the iteration:
+    \begin{align}
+        \mathbf{x}^{(k+1)} &= B_J \mathbf{x}^{(k)} + \mathbf{f} \\
+        &= -D^{-1}(L + U) \mathbf{x}^{(k)} + D^{-1}\mathbf{b} \notag \\
+        B_J &= -D^{-1}(L + U) \tag{iteration matrix} \\
+        \mathbf{f} &= D^{-1}\mathbf{b} \tag{residual vector}
+    \end{align}
+\end{definition}
+
+\begin{corollary}{Jacobi Iteration}{jacobi-iteration}
+    The Jacobi method can be expressed componentwise as
+    \begin{equation}
+        x_i^{(k+1)} = \frac{1}{a_{ii}}\left(b_i - \sum_{\substack{j=1 \\ j \neq i}}^n a_{ij} x_j^{(k)}\right), \qquad i = 1, \ldots, n.
+    \end{equation}
+    This means that each new \(x_i^{(k+1)}\) is computed using only the previous values \(x_j^{(k)}\) for \(j \neq i\).
+\end{corollary}
+
+The Jacobi method is easy to implement and parallelize, but may converge slowly for some matrices.
+\begin{theorem}{Convergence of the Jacobi Method}{jacobi-convergence}
+    If $A$ and $2D-A$ are symmetric and positive definite, then the Jacobi method is convergent and $\rho(B_J) = \|B_J\|_A = \|B_J\|_D$.
+\end{theorem}
+
+
+\subsection{Gauss--Seidel Method}
+The Gauss--Seidel method improves on Jacobi by updating each component sequentially, using the latest available values.
+
+\begin{definition}{Gauss--Seidel Method}{gauss-seidel-method}
+    method uses the splitting \(P = D + L\) and \(N = U\), leading to the iteration:
+        \begin{align}
+            \mathbf{x}^{(k+1)} &= B_{GS} \mathbf{x}^{(k)} + \mathbf{f} \\
+            &= -(D + L)^{-1}U \mathbf{x}^{(k)} + (D + L)^{-1}\mathbf{b} \notag \\
+            B_{GS} &= -(D + L)^{-1}U \tag{iteration matrix} \\
+            \mathbf{f} &= (D + L)^{-1}\mathbf{b} \tag{residual vector}
+        \end{align}
+\end{definition}
+\begin{corollary}{Gauss--Seidel Iteration}{gauss-seidel-iteration}
+    The Gauss--Seidel method can be expressed componentwise as
+    \begin{equation}
+        x_i^{(k+1)} = \frac{1}{a_{ii}}\left(b_i - \sum_{j=1}^{i-1} a_{ij} x_j^{(k+1)} - \sum_{j=i+1}^n a_{ij} x_j^{(k)}\right), \qquad i = 1, \ldots, n.
+    \end{equation}
+    Each \(x_i^{(k+1)}\) uses updated values for \(j < i\) and previous values for \(j > i\), typically yielding faster convergence than Jacobi.
+\end{corollary}
+\begin{theorem}{Monotonic Convergence of Gauss--Seidel}{gauss-seidel-monotonic}
+    If $A$ is symmetric positive definite, the Gauss--Seidel method is monotonically convergent with respect to the $\|\cdot\|_A$ norm:
+    \[
+        \|\mathbf{e}^{(k+1)}\|_A \leq \|\mathbf{e}^{(k)}\|_A, \quad \text{for } k \geq 0.
+    \]
+    This ensures that the error decreases at each iteration, guaranteeing convergence of the method.
+\end{theorem}
+\begin{proof}[Proof of Monotonic Convergence for the Gauss--Seidel Method]
+    For symmetric positive definite $A$, the Gauss-Seidel error satisfies $\mathbf{e}^{(k+1)} = -(D + L)^{-1}U \mathbf{e}^{(k)}$ where $U = L^T$. Since $A$ is positive definite, the iteration matrix $B_{GS} = -(D + L)^{-1}L^T$ has the property that
+    \[
+    \|\mathbf{e}^{(k+1)}\|_A^2 < \|\mathbf{e}^{(k)}\|_A^2
+    \]
+    unless $\mathbf{e}^{(k)} = 0$. This follows from the fact that $(D + L)^{-T} A (D + L)^{-1}$ is positive definite but not equal to the identity, ensuring strict contraction in the $A$-norm.
+\end{proof}
+\begin{theorem}{Convergence for Strict Diagonal Dominant Matrices}{jacobi-gauss-seidel-convergence}
+    Let $A$ be a strictly diagonally dominant matrix by rows, i.e.,
+    \[
+        |a_{ii}| > \sum_{j \neq i} |a_{ij}|, \quad \text{for all } i = 1, \ldots, n.
+    \]
+    Then both the Jacobi and Gauss--Seidel methods converge for any initial guess $\mathbf{x}^{(0)}$.
+\end{theorem}
+
+\begin{proof}[Proof of Convergence for Strict Diagonal Dominant Matrices]
+    For Jacobi, the iteration matrix is $B_J = -D^{-1}(L+U)$. The infinity norm is
+    \[
+        \|B_J\|_\infty = \max_{i} \sum_{j \neq i} \left|\frac{a_{ij}}{a_{ii}}\right| < 1
+    \]
+    by the strict diagonal dominance assumption. Thus, $\rho(B_J) \leq \|B_J\|_\infty < 1$, so Jacobi converges.
+    For Gauss--Seidel, see \cite{Axe94}.
+\end{proof}
+
+\begin{example}{Jacobi vs. Gauss--Seidel}{jacobi-vs-gauss-seidel}
+    Consider the system
+    \begin{equation*}
+        \begin{bmatrix}
+            a & c & d \\
+            c & a & c \\
+            d & c & a
+        \end{bmatrix}
+        \begin{bmatrix}
+            x_1 \\ x_2 \\ x_3
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+            b_1 \\ b_2 \\ b_3
+        \end{bmatrix}
+    \end{equation*}
+
+    The Jacobi iteration is
+
+    \begin{align*}
+        x_1^{(k+1)}        & = \frac{1}{a}(b_1 - c x_2^{(k)} - d x_3^{(k)})             \\
+        x_2^{(k+1)}        & = \frac{1}{a}(b_2 - c x_1^{(k)} - c x_3^{(k)})             \\
+        x_3^{(k+1)}        & = \frac{1}{a}(b_3 - d x_1^{(k)} - c x_2^{(k)})             \\
+        \mathbf{x}^{(k+1)} & = \frac{1}{a}(\mathbf{b} - \begin{bmatrix}
+                                                            0 & c & d \\
+                                                            c & 0 & c \\
+                                                            d & c & 0
+                                                        \end{bmatrix} \mathbf{x}^{(k)})
+    \end{align*}
+
+    The Gauss--Seidel iteration is
+    \begin{align*}
+        x_1^{(k+1)}        & = \frac{1}{a}(b_1 - c x_2^{(k)} - d x_3^{(k)})              \\
+        x_2^{(k+1)}        & = \frac{1}{a}(b_2 - c x_1^{(k+1)} - c x_3^{(k)})            \\
+        x_3^{(k+1)}        & = \frac{1}{a}(b_3 - d x_1^{(k+1)} - c x_2^{(k+1)})          \\
+        \mathbf{x}^{(k+1)} & = \frac{1}{a}(\mathbf{b} - \begin{bmatrix}
+                                                            0 & c & d \\
+                                                            c & 0 & c \\
+                                                            d & c & 0
+                                                        \end{bmatrix} \mathbf{x}^{(k+1)}
+        -
+        \begin{bmatrix}
+            0 & c & d \\
+            c & 0 & c \\
+            d & c & 0
+        \end{bmatrix} \mathbf{x}^{(k)})
+    \end{align*}
+    Gauss--Seidel uses updated values immediately, often leading to faster convergence than Jacobi.
+\end{example}
+
+\subsection{Jacobi Over-Relaxation (JOR)}
+The Jacobi Over-Relaxation (JOR) method is a stationary iterative scheme that generalizes the Jacobi method by introducing a relaxation parameter \(\omega\).
+
+
+\begin{definition}{Jacobi Over-Relaxation (JOR) Method}{jor-method}
+    Defined for \(A\mathbf{x} = \mathbf{b}\), the JOR iteration is:
+    \[
+        \mathbf{x}^{(k+1)} = B_{JOR} \mathbf{x}^{(k)} + \mathbf{f}, \qquad
+        B_{JOR} = (1-\omega)I - \omega D^{-1}(L + U), \qquad
+        \mathbf{f} = \omega D^{-1}\mathbf{b}.
+    \]
+    Componentwise, for \(i = 1, \ldots, n\):
+    \begin{equation*}
+        x_i^{(k+1)} = (1-\omega)x_i^{(k)} + \frac{\omega}{a_{ii}}\left(b_i - \sum_{\substack{j=1 \\ j \neq i}}^n a_{ij} x_j^{(k)}\right).
+    \end{equation*}
+\end{definition}
+
+    For \(\omega = 1\), JOR reduces to the standard Jacobi method. For \(0 < \omega < 1\), the method is under-relaxed; for \(\omega > 1\), it is over-relaxed. Proper choice of \(\omega\) can improve convergence for some problems.
+\begin{theorem}{Convergence of the Jacobi Over-Relaxation (JOR) Method}{jor-convergence}
+    Let \(A\) be a matrix with nonzero diagonal entries and let \(0 < \omega < 2\). The Jacobi Over-Relaxation (JOR) method converges for any initial guess \(\mathbf{x}^{(0)}\) if either
+    \begin{itemize}
+        \item \(A\) is strictly diagonally dominant by rows, or
+        \item \(A\) is symmetric positive definite and \(0 < \omega < \dfrac{2}{\rho(D^{-1}A)}\),
+    \end{itemize}
+    where \(\rho(D^{-1}A)\) is the spectral radius of \(D^{-1}A\).
+\end{theorem}
+\begin{proof}
+    The eigenvalues of the JOR iteration matrix are given by \(\mu_k = \omega \lambda_k + 1 - \omega\), where \(\lambda_k\) are the eigenvalues of the Jacobi iteration matrix \(B_J\). For \(A\) strictly diagonally dominant, \(|\lambda_k| < 1\), so for \(0 < \omega < 2\), \(|\mu_k| < 1\) and thus \(\rho(B_{JOR}) < 1\). For \(A\) symmetric positive definite, convergence holds for \(0 < \omega < 2/\rho(D^{-1}A)\) by analysis of the spectral radius.
+\end{proof}
+
+\subsection{Successive Over-Relaxation (SOR)}
+The Successive Over-Relaxation (SOR) method generalizes Gauss--Seidel by introducing a relaxation parameter \(\omega\).
+
+\begin{definition}{Successive Over-Relaxation (SOR) Method}{sor-method}
+    The Successive Over-Relaxation (SOR) method is a stationary iterative scheme for solving \(A\mathbf{x} = \mathbf{b}\), defined by the iteration:
+    \[
+        \mathbf{x}^{(k+1)} = B_{SOR} \mathbf{x}^{(k)} + \mathbf{f}, \qquad
+        B_{SOR} = (D + \omega L)^{-1} \left[(1-\omega)D - \omega U\right], \qquad
+        \mathbf{f} = (D + \omega L)^{-1} \omega \mathbf{b}.
+    \]
+    Componentwise, for \(i = 1, \ldots, n\):
+    \begin{equation*}
+        x_i^{(k+1)} = (1-\omega)x_i^{(k)} + \frac{\omega}{a_{ii}}\left(b_i - \sum_{j=1}^{i-1} a_{ij} x_j^{(k+1)} - \sum_{j=i+1}^n a_{ij} x_j^{(k)}\right).
+    \end{equation*}
+\end{definition}
+
+For \(\omega = 1\), SOR reduces to Gauss--Seidel. For \(0 < \omega < 1\), the method is under-relaxed; for \(\omega > 1\), it is over-relaxed. SOR can converge much faster than Gauss--Seidel for an optimal choice of \(\omega\) (typically \(1 < \omega < 2\) for many problems).
+
+\begin{theorem}{Convergence of the SOR Method}{sor-convergence}
+    The Successive Over-Relaxation (SOR) method converges for any initial guess \(\mathbf{x}^{(0)}\) if the matrix \(A\) is either strictly diagonally dominant by rows, or symmetric positive definite, and the relaxation parameter satisfies \(0 < \omega < 2\).
+    Moreover, for any \(\omega \in \mathbb{R}\), the spectral radius of the SOR iteration matrix satisfies \(\rho(B_{SOR}) \geq |\omega - 1|\). Therefore, the SOR method fails to converge if \(\omega \leq 0\) or \(\omega \geq 2\).
+\end{theorem}
+\begin{proof}
+    For any \(\omega \in \mathbb{R}\), it can be shown that all eigenvalues \(\lambda_i\) of \(B_{SOR}\) satisfy \(|\lambda_i| \geq |\omega - 1|\), so \(\rho(B_{SOR}) \geq |\omega - 1|\). Thus, if \(\omega \leq 0\) or \(\omega \geq 2\), \(\rho(B_{SOR}) \geq 1\) and the method does not converge.
+
+    If \(A\) is strictly diagonally dominant by rows or symmetric positive definite, and \(0 < \omega < 2\), then \(\rho(B_{SOR}) < 1\) and the method converges. See standard texts for details and further discussion.
+\end{proof}

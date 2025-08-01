@@ -1,0 +1,657 @@
+\chapter{Direct Methods for Solving Linear Systems}
+\label{ch:direct-linsys}
+
+\section{Gaussian Elimination}
+
+\begin{theorem}{Gaussian Elimination}{gauss-elim}
+    A systematic method for solving \(A\mathbf{x} = \mathbf{b}\)) by reducing \(A\)) to upper triangular form, then using back substitution.
+\end{theorem}
+
+\subsection{LU Decomposition}
+
+\subsubsection{Definition and Structure}
+LU decomposition factors a nonsingular matrix \(A\in\mathbb{R}^{n\times n}\)) into the product of a unit lower-triangular matrix \(L\)) and an upper-triangular matrix \(U\)):
+\[
+    A = LU,
+    \quad
+    L = \begin{bmatrix}
+        1         &        &              & 0 \\
+        \ell_{21} & 1      &              &   \\
+        \vdots    & \ddots & \ddots       &   \\
+        \ell_{n1} & \cdots & \ell_{n,n-1} & 1
+    \end{bmatrix},
+    \quad
+    U = \begin{bmatrix}
+        u_{11} & u_{12} & \cdots & u_{1n}    \\
+        0      & u_{22} & \ddots & \vdots    \\
+        \vdots & \ddots & \ddots & u_{n-1,n} \\
+        0      & \cdots & 0      & u_{nn}
+    \end{bmatrix}.
+\]
+
+\subsubsection{Solving Linear Systems with LU}
+\begin{definition}{Solving Linear Systems with LU Decomposition}{lu-solve}
+    Given \(A = LU\)), we can solve the linear system \(A\mathbf{x} = \mathbf{b}\)) in two steps:
+    \begin{align*}
+        L\mathbf{y} & = \mathbf{b} \quad \Rightarrow \quad \mathbf{y} = L^{-1}\mathbf{b} \tag{forward substitution} \\
+        U\mathbf{x} & = \mathbf{y} \quad \Rightarrow \quad \mathbf{x} = U^{-1}\mathbf{y} \tag{back substitution}
+    \end{align*}
+\end{definition}
+
+\subsubsection{Pivoting for Stability}
+To improve numerical stability, partial pivoting is often applied. One introduces a permutation matrix \(P\)) such that
+\[
+    PA = LU,
+\]
+where at each step \(k\)) one swaps row \(k\)) with the row \(p\ge k\)) maximizing \(| a_{p k} |\)).
+
+%\subsubsection{Doolittle Algorithm}
+% (Algorithmic details can be added here if needed)
+
+\section{Cholesky Decomposition}
+\label{sec:cholesky-decomposition}
+
+\subsection{Definition and Structure}
+Cholesky decomposition factors a symmetric positive-definite matrix \(A \in \mathbb{R}^{n \times n}\)) into the product of a lower-triangular matrix and its transpose:
+\[
+    A = LL^T,
+    \quad
+    L = \begin{bmatrix}
+        \ell_{11} &           &              & 0         \\
+        \ell_{21} & \ell_{22} &              &           \\
+        \vdots    & \ddots    & \ddots       &           \\
+        \ell_{n1} & \cdots    & \ell_{n,n-1} & \ell_{nn}
+    \end{bmatrix},
+\]
+where each diagonal entry \(\ell_{kk}>0\)).
+\begin{example}{LU factorization and solution of $A\mathbf{x} = \mathbf{b}$}{lu-example}
+Given
+\[
+A = \begin{bmatrix}
+-2 & 2 & 1 & 0 \\
+-2 & 0 & 2 & 1 \\
+0 & 2 & -2 & 0 \\
+0 & 0 & 1 & 0
+\end{bmatrix},
+\quad
+\mathbf{b} = \begin{bmatrix}
+-1 \\ 1 \\ 1 \\ 1
+\end{bmatrix}
+\]
+We seek $A = LU$ with $L$ unit lower-triangular and $U$ upper-triangular, and then solve $A\mathbf{x} = \mathbf{b}$.
+
+\textbf{Step 1: LU factorization (no pivoting)}
+
+Let
+\[
+L = \begin{bmatrix}
+1 & 0 & 0 & 0 \\
+\ell_{21} & 1 & 0 & 0 \\
+\ell_{31} & \ell_{32} & 1 & 0 \\
+\ell_{41} & \ell_{42} & \ell_{43} & 1
+\end{bmatrix},
+\quad
+U = \begin{bmatrix}
+u_{11} & u_{12} & u_{13} & u_{14} \\
+0 & u_{22} & u_{23} & u_{24} \\
+0 & 0 & u_{33} & u_{34} \\
+0 & 0 & 0 & u_{44}
+\end{bmatrix}
+\]
+
+\textbf{First row:}
+\begin{align*}
+u_{11} &= -2, & u_{12} &= 2, & u_{13} &= 1, & u_{14} &= 0 \\
+\ell_{21} &= \frac{a_{21}}{u_{11}} = \frac{-2}{-2} = 1 \\
+\ell_{31} &= \frac{a_{31}}{u_{11}} = \frac{0}{-2} = 0 \\
+\ell_{41} &= \frac{a_{41}}{u_{11}} = \frac{0}{-2} = 0
+\end{align*}
+
+\textbf{Second row:}
+\begin{align*}
+u_{22} &= a_{22} - \ell_{21} u_{12} = 0 - (1)(2) = -2 \\
+u_{23} &= a_{23} - \ell_{21} u_{13} = 2 - (1)(1) = 1 \\
+u_{24} &= a_{24} - \ell_{21} u_{14} = 1 - (1)(0) = 1 \\
+\ell_{32} &= \frac{a_{32} - \ell_{31} u_{12}}{u_{22}} = \frac{2 - (0)(2)}{-2} = -1 \\
+\ell_{42} &= \frac{a_{42} - \ell_{41} u_{12}}{u_{22}} = \frac{0 - (0)(2)}{-2} = 0
+\end{align*}
+
+\textbf{Third row:}
+\begin{align*}
+u_{33} &= a_{33} - \ell_{31} u_{13} - \ell_{32} u_{23} = -2 - (0)(1) - (-1)(1) = -2 + 1 = -1 \\
+u_{34} &= a_{34} - \ell_{31} u_{14} - \ell_{32} u_{24} = 0 - (0)(0) - (-1)(1) = 0 + 1 = 1 \\
+\ell_{43} &= \frac{a_{43} - \ell_{41} u_{13} - \ell_{42} u_{23}}{u_{33}} = \frac{1 - (0)(1) - (0)(1)}{-1} = \frac{1}{-1} = -1
+\end{align*}
+
+\textbf{Fourth row:}
+\begin{align*}
+u_{44} &= a_{44} - \ell_{41} u_{14} - \ell_{42} u_{24} - \ell_{43} u_{34} \\
+    &= 0 - (0)(0) - (0)(1) - (-1)(1) = 0 + 1 = 1
+\end{align*}
+
+So,
+\[
+L = \begin{bmatrix}
+1 & 0 & 0 & 0 \\
+1 & 1 & 0 & 0 \\
+0 & -1 & 1 & 0 \\
+0 & 0 & -1 & 1
+\end{bmatrix},
+\quad
+U = \begin{bmatrix}
+-2 & 2 & 1 & 0 \\
+0 & -2 & 1 & 1 \\
+0 & 0 & -1 & 1 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\]
+
+\textbf{Step 2: Solve $L\mathbf{y} = \mathbf{b}$ (forward substitution)}
+\[
+\begin{cases}
+y_1 = -1 \\
+y_2 = 1 - 1 \cdot y_1 = 1 - (-1) = 2 \\
+y_3 = 1 - (-1) \cdot y_2 = 1 + 2 = 3 \\
+y_4 = 1 - (-1) \cdot y_3 = 1 + 3 = 4
+\end{cases}
+\quad
+\Rightarrow
+\quad
+\mathbf{y} = \begin{bmatrix} -1 \\ 2 \\ 3 \\ 4 \end{bmatrix}
+\]
+\textbf{Step 3: Solve $U\mathbf{x} = \mathbf{y}$ (back substitution)}
+\[
+\begin{cases}
+x_4 = \frac{y_4}{u_{44}} = \frac{4}{1} = 4 \\
+x_3 = \frac{y_3 - u_{34} x_4}{u_{33}} = \frac{3 - 1 \cdot 4}{-1} = \frac{-1}{-1} = 1 \\
+x_2 = \frac{y_2 - u_{23} x_3 - u_{24} x_4}{u_{22}} = \frac{2 - 1 \cdot 1 - 1 \cdot 4}{-2} = \frac{2 - 1 - 4}{-2} = \frac{-3}{-2} = \frac{3}{2} \\
+x_1 = \frac{y_1 - u_{12} x_2 - u_{13} x_3 - u_{14} x_4}{u_{11}} = \frac{-1 - 2 \cdot \frac{3}{2} - 1 \cdot 1 - 0 \cdot 4}{-2} = \frac{-1 - 3 - 1}{-2} = \frac{-5}{-2} = \frac{5}{2}
+\end{cases}
+\]
+So the solution is \(\mathbf{x} = \begin{bmatrix}5/2 & 3/2 & 1 & 4\end{bmatrix}^\top\)
+\textbf{Step 4: Compute the condition number $\kappa_\infty(A)$}
+
+Recall that the condition number in the infinity norm is defined as
+\[
+    \kappa_\infty(A) = \|A\|_\infty \cdot \|A^{-1}\|_\infty.
+\]
+From the given information, $\|A^{-1} \mathbf{b}\|_\infty = \|A^{-1}\|_\infty \|\mathbf{b}\|_\infty$.
+
+\textbf{Step 4: Compute the condition number $\kappa_\infty(A)$}
+
+First, compute the infinity norm of $A$:
+\begin{align*}
+\|A\|_\infty &= \max_{1 \leq i \leq 4} \sum_{j=1}^4 |a_{ij}|\\
+&= \max\{ |{-2}|+|2|+|1|+|0|,\, |{-2}|+|0|+|2|+|1|,\, |0|+|2|+|{-2}|+|0|,\, |0|+|0|+|1|+|0| \}\\
+&= \max\{5, 5, 4, 1\} = 5
+\end{align*}
+Next, compute $\|\mathbf{b}\|_\infty = \max\{|-1|, 1, 1, 1\} = 1$.
+
+From the solution $\mathbf{x} = (5/2,\, 3/2,\, 1,\, 4)^\top$, we have
+\[
+\|A^{-1} \mathbf{b}\|_\infty = \|\mathbf{x}\|_\infty = 4
+\]
+
+Therefore,
+\[
+\|A^{-1}\|_\infty = \frac{\|A^{-1} \mathbf{b}\|_\infty}{\|\mathbf{b}\|_\infty} = \frac{4}{1} = 4
+\]
+and
+\[
+\kappa_\infty(A) = \|A\|_\infty \cdot \|A^{-1}\|_\infty = 5 \cdot 4 = 20
+\]
+
+So, the condition number is $\boxed{20}$.
+\end{example}
+
+\subsection{Cholesky Algorithm}
+An in-place Cholesky factorization proceeds as:
+\begin{algorithm}[H]
+    \caption{Cholesky Decomposition}
+    \label{alg:cholesky}
+    \begin{algorithmic}[1]
+        \Require \(A\in\mathbb{R}^{n\times n}\)) symmetric positive-definite
+        \Ensure \(L\)) lower-triangular with \(\ell_{kk}>0\)), such that \(A = LL^T\))
+        \For{\(k = 1\)) \textbf{to} \(n\))}
+        \State \(\ell_{kk} \gets \sqrt{\,a_{kk} - \sum_{p=1}^{k-1} \ell_{kp}^2\,}\))
+        \For{\(i = k+1\)) \textbf{to} \(n\))}
+        \State \(\ell_{ik} \gets \bigl(a_{ik} - \sum_{p=1}^{k-1} \ell_{ip}\,\ell_{kp}\bigr) / \ell_{kk}\))
+        \EndFor
+        \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+\subsection{Complexity and Stability}
+The Cholesky algorithm requires \(\tfrac{1}{3}n^3 + O(n^2)\)) operations. For symmetric positive-definite matrices, it is numerically stable without the need for pivoting.
+
+\begin{example}{Cholesky factorization \(A=LL^T\)) of a \(3\times3\)) matrix}{cholesky-example}
+    \begin{equation*}
+        \underbrace{
+            \begin{bmatrix}
+                a_{11} & a_{12} & a_{13} \\
+                a_{12} & a_{22} & a_{23} \\
+                a_{13} & a_{23} & a_{33}
+            \end{bmatrix}
+        }_{A}
+        =
+        \underbrace{
+            \begin{bmatrix}
+                \ell_{11} & 0         & 0         \\
+                \ell_{21} & \ell_{22} & 0         \\
+                \ell_{31} & \ell_{32} & \ell_{33}
+            \end{bmatrix}
+        }_{L}
+        \underbrace{
+            \begin{bmatrix}
+                \ell_{11} & \ell_{21} & \ell_{31} \\
+                0         & \ell_{22} & \ell_{32} \\
+                0         & 0         & \ell_{33}
+            \end{bmatrix}
+        }_{L^T}
+    \end{equation*}
+\end{example}
+
+\section{Givens Rotation}
+\label{sec:givens-rotation}
+
+\subsection{Motivation and Overview}
+Givens rotations are used to introduce zeros into vectors or matrices, particularly in the context of QR decomposition and solving linear systems. Unlike Gaussian elimination, which uses row operations, Givens rotations use orthogonal transformations to zero out specific elements, preserving numerical stability and orthogonality.
+
+\subsection{Definition of a Givens Rotation}
+A Givens rotation is a plane rotation that zeroes out a specific entry in a vector or matrix while preserving orthogonality.
+The rotation matrix $G$ is an $n \times n$ identity matrix, modified in the $(i, j)$-plane by the $2 \times 2$ block:
+\[
+    G_{[i,j]} = \begin{bmatrix}
+        c  & s \\
+        -s & c
+    \end{bmatrix},
+\]
+where $c = \cos\theta$ and $s = \sin\theta$.
+
+\subsection{Constructing a Givens Rotation}
+Given a vector $\mathbf{x} = (a, b)^T$, we wish to find $c$ and $s$ such that
+\[
+    \begin{bmatrix}
+        c  & s \\
+        -s & c
+    \end{bmatrix}
+    \begin{bmatrix}
+        a \\
+        b
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        r \\
+        0
+    \end{bmatrix},
+\]
+where $r = \sqrt{a^2 + b^2}$. The parameters are chosen as
+\[
+    c = \frac{a}{\sqrt{a^2 + b^2}}, \qquad s = \frac{b}{\sqrt{a^2 + b^2}}.
+\]
+
+\subsection{Application to Matrices}
+To zero out the $j$-th entry of a column vector (or matrix), apply the Givens rotation to rows $i$ and $j$:
+\begin{itemize}
+    \item For QR decomposition, Givens rotations are applied successively to introduce zeros below the diagonal, transforming a matrix $A$ into an upper triangular matrix $R$.
+    \item The product of all Givens rotations forms an orthogonal matrix $Q$ such that $A = QR$.
+\end{itemize}
+\subsection{Recipe: Applying Givens Rotations for QR Decomposition}
+
+To perform QR decomposition of a matrix $A \in \mathbb{R}^{m \times n}$ using Givens rotations:
+
+\begin{enumerate}
+    \item For each column $j$ from $1$ to $n$:
+          \begin{enumerate}
+              \item For each row $i$ from $m$ down to $j+1$:
+                    \begin{enumerate}
+                        \item If $A_{i,j} \neq 0$, construct a Givens rotation $G(i, j, \theta)$ to zero $A_{i,j}$:
+                              \begin{itemize}
+                                  \item Let $a = A_{j,j}$, $b = A_{i,j}$.
+                                  \item Compute $r = \sqrt{a^2 + b^2}$.
+                                  \item Set $c = a/r$, $s = -b/r$.
+                              \end{itemize}
+                        \item Apply the rotation to rows $j$ and $i$ for columns $j$ to $n$:
+                              \[
+                                  \begin{bmatrix}
+                                      A_{j,k} \\
+                                      A_{i,k}
+                                  \end{bmatrix}
+                                  \gets
+                                  \begin{bmatrix}
+                                      c & -s \\
+                                      s & c
+                                  \end{bmatrix}
+                                  \begin{bmatrix}
+                                      A_{j,k} \\
+                                      A_{i,k}
+                                  \end{bmatrix}
+                              \]
+                    \end{enumerate}
+          \end{enumerate}
+    \item After all rotations, $A$ is upper triangular ($R$ factor).
+    \item (Optionally) Accumulate the product of all Givens rotations to form the orthogonal matrix $Q$.
+\end{enumerate}
+
+\begin{example}{QR decomposition of a $4\times3$ matrix using Givens rotations}{givens-4x3-example}
+    Let
+    \[
+        A = \begin{bmatrix}
+            6 & 5 & 0 \\
+            5 & 1 & 4 \\
+            3 & 4 & 2 \\
+            2 & 3 & 1
+        \end{bmatrix}
+    \]
+    We will zero entries below the diagonal in each column using Givens rotations.
+
+    \textbf{Step 1: Column 1}
+
+    \begin{itemize}
+        \item \underline{Zero $A_{4,1}$ ($a=6$, $b=2$):}
+        \[
+            r_1 = \sqrt{6^2 + 2^2} = 2\sqrt{10}, \quad c_1 = 6/r_1 = 3/\sqrt{10}, \quad s_1 = -2/r_1 = -1/\sqrt{10}
+        \]
+        Apply to rows 1 and 4 for columns 1--3:
+        \[
+            \begin{bmatrix}
+                A_{1,k} \\
+                A_{4,k}
+            \end{bmatrix}
+            \gets
+            \begin{bmatrix}
+                c_1 & -s_1 \\
+                s_1 & c_1
+            \end{bmatrix}
+            \begin{bmatrix}
+                A_{1,k} \\
+                A_{4,k}
+            \end{bmatrix}
+        \]
+        For $k=1$:
+        \[
+            \begin{bmatrix}
+                6 \\
+                2
+            \end{bmatrix}
+            \to
+            \begin{bmatrix}
+                2\sqrt{10} \\
+                0
+            \end{bmatrix}
+        \]
+        For $k=2$:
+        \[
+            \begin{bmatrix}
+                5 \\
+                3
+            \end{bmatrix}
+            \to
+            \begin{bmatrix}
+                c_1 \cdot 5 - s_1 \cdot 3 \\
+                s_1 \cdot 5 + c_1 \cdot 3
+            \end{bmatrix}
+            =
+            \begin{bmatrix}
+                \frac{3}{\sqrt{10}} \cdot 5 - \left(-\frac{1}{\sqrt{10}}\right) \cdot 3 \\
+                -\frac{1}{\sqrt{10}} \cdot 5 + \frac{3}{\sqrt{10}} \cdot 3
+            \end{bmatrix}
+            =
+            \begin{bmatrix}
+                \frac{15 + 3}{\sqrt{10}} \\
+                \frac{-5 + 9}{\sqrt{10}}
+            \end{bmatrix}
+            =
+            \begin{bmatrix}
+                \frac{18}{\sqrt{10}} \\
+                \frac{4}{\sqrt{10}}
+            \end{bmatrix}
+        \]
+        For $k=3$:
+        \[
+            \begin{bmatrix}
+                0 \\
+                1
+            \end{bmatrix}
+            \to
+            \begin{bmatrix}
+                c_1 \cdot 0 - s_1 \cdot 1 \\
+                s_1 \cdot 0 + c_1 \cdot 1
+            \end{bmatrix}
+            =
+            \begin{bmatrix}
+                -\frac{1}{\sqrt{10}} \\
+                \frac{3}{\sqrt{10}}
+            \end{bmatrix}
+        \]
+        The updated matrix after this rotation:
+        \[
+            A^{(1)} = \begin{bmatrix}
+                2\sqrt{10} & \frac{18}{\sqrt{10}} & -\frac{1}{\sqrt{10}} \\
+                5 & 1 & 4 \\
+                3 & 4 & 2 \\
+                0 & \frac{4}{\sqrt{10}} & \frac{3}{\sqrt{10}}
+            \end{bmatrix}
+        \]
+
+        \item \underline{Zero $A_{3,1}$ ($a=2\sqrt{10}$, $b=3$):}
+        \[
+            r_2 = \sqrt{(2\sqrt{10})^2 + 3^2} = \sqrt{40 + 9} = \sqrt{49} = 7
+        \]
+        \[
+            c_2 = \frac{2\sqrt{10}}{7}, \quad s_2 = -\frac{3}{7}
+        \]
+        Apply to rows 1 and 3 for columns 1--3:
+        \[
+            \begin{bmatrix}
+                2\sqrt{10} \\
+                3
+            \end{bmatrix}
+            \to
+            \begin{bmatrix}
+                7 \\
+                0
+            \end{bmatrix}
+        \]
+        For $k=2$:
+        \[
+            \begin{bmatrix}
+                \frac{18}{\sqrt{10}} \\
+                4
+            \end{bmatrix}
+            \to
+            \begin{bmatrix}
+                c_2 \cdot \frac{18}{\sqrt{10}} - s_2 \cdot 4 \\
+                s_2 \cdot \frac{18}{\sqrt{10}} + c_2 \cdot 4
+            \end{bmatrix}
+        \]
+        For $k=3$:
+        \[
+            \begin{bmatrix}
+                -\frac{1}{\sqrt{10}} \\
+                2
+            \end{bmatrix}
+            \to
+            \begin{bmatrix}
+                c_2 \cdot \left(-\frac{1}{\sqrt{10}}\right) - s_2 \cdot 2 \\
+                s_2 \cdot \left(-\frac{1}{\sqrt{10}}\right) + c_2 \cdot 2
+            \end{bmatrix}
+        \]
+        The updated matrix after this rotation:
+        \[
+            A^{(2)} = \begin{bmatrix}
+                7 & a_{12}^{(2)} & a_{13}^{(2)} \\
+                5 & 1 & 4 \\
+                0 & a_{32}^{(2)} & a_{33}^{(2)} \\
+                0 & \frac{4}{\sqrt{10}} & \frac{3}{\sqrt{10}}
+            \end{bmatrix}
+        \]
+        (where $a_{12}^{(2)}, a_{13}^{(2)}, a_{32}^{(2)}, a_{33}^{(2)}$ are computed as above.)
+
+        \item \underline{Zero $A_{2,1}$ ($a=7$, $b=5$):}
+        \[
+            r_3 = \sqrt{7^2 + 5^2} = \sqrt{49 + 25} = \sqrt{74}
+        \]
+        \[
+            c_3 = 7/\sqrt{74}, \quad s_3 = -5/\sqrt{74}
+        \]
+        Apply to rows 1 and 2 for columns 1--3:
+        \[
+            \begin{bmatrix}
+                7 \\
+                5
+            \end{bmatrix}
+            \to
+            \begin{bmatrix}
+                \sqrt{74} \\
+                0
+            \end{bmatrix}
+        \]
+        For $k=2,3$ update similarly.
+
+        The matrix after column 1 is upper triangular in column 1:
+        \[
+            A^{(3)} = \begin{bmatrix}
+                \sqrt{74} & a_{12}^{(3)} & a_{13}^{(3)} \\
+                0 & a_{22}^{(3)} & a_{23}^{(3)} \\
+                0 & a_{32}^{(3)} & a_{33}^{(3)} \\
+                0 & a_{42}^{(3)} & a_{43}^{(3)}
+            \end{bmatrix}
+        \]
+    \end{itemize}
+
+    \textbf{Step 2: Column 2}
+
+    \begin{itemize}
+        \item \underline{Zero $A_{4,2}$ ($a=a_{22}^{(3)}$, $b=a_{42}^{(3)}$):}
+        \[
+            r_4 = \sqrt{(a_{22}^{(3)})^2 + (a_{42}^{(3)})^2}, \quad c_4 = a_{22}^{(3)}/r_4, \quad s_4 = -a_{42}^{(3)}/r_4
+        \]
+        Apply to rows 2 and 4 for columns 2--3.
+
+        \item \underline{Zero $A_{3,2}$ ($a=a_{22}^{(3)}$, $b=a_{32}^{(3)}$):}
+        \[
+            r_5 = \sqrt{(a_{22}^{(3)})^2 + (a_{32}^{(3)})^2}, \quad c_5 = a_{22}^{(3)}/r_5, \quad s_5 = -a_{32}^{(3)}/r_5
+        \]
+        Apply to rows 2 and 3 for columns 2--3.
+
+        The matrix after column 2:
+        \[
+            A^{(5)} = \begin{bmatrix}
+                \sqrt{74} & a_{12}^{(3)} & a_{13}^{(3)} \\
+                0 & r_5 & a_{23}^{(5)} \\
+                0 & 0 & a_{33}^{(5)} \\
+                0 & 0 & a_{43}^{(5)}
+            \end{bmatrix}
+        \]
+    \end{itemize}
+
+    \textbf{Step 3: Column 3}
+
+    \begin{itemize}
+        \item \underline{Zero $A_{4,3}$ ($a=a_{33}^{(5)}$, $b=a_{43}^{(5)}$):}
+        \[
+            r_6 = \sqrt{(a_{33}^{(5)})^2 + (a_{43}^{(5)})^2}, \quad c_6 = a_{33}^{(5)}/r_6, \quad s_6 = -a_{43}^{(5)}/r_6
+        \]
+        Apply to rows 3 and 4 for column 3.
+
+        The final matrix is upper triangular:
+        \[
+            R = \begin{bmatrix}
+                r_{11} & r_{12} & r_{13} \\
+                0      & r_{22} & r_{23} \\
+                0      & 0      & r_{33} \\
+                0      & 0      & 0
+            \end{bmatrix}
+        \]
+        where each $r_{ij}$ is computed during the process.
+    \end{itemize}
+
+    \textbf{Summary:}
+    Each Givens rotation zeros a subdiagonal entry, and the explicit formulas for $c$ and $s$ are given at each step. The matrix is updated after each rotation, and all intermediate matrices can be written out as above. The process continues until all entries below the diagonal are zero, yielding the $R$ factor.
+\end{example}
+
+\subsection{Algorithm: QR Decomposition via Givens Rotations}
+
+\begin{algorithm}[H]
+    \caption{Givens-Rotation QR Decomposition}
+    \label{alg:givens-qr}
+    \begin{algorithmic}[1]
+        \Require $A\in\mathbb{R}^{m\times n}$
+        \Ensure Upper triangular $R$ in place of $A$; optionally, orthogonal $Q$ accumulates
+        \Function{GivensQR}{$A$}
+        \State $(m,n)\gets\text{size}(A)$
+        % Optionally initialize $Q\gets I_{m}$
+        \For{$j\gets 1$ \textbf{to} $n$}
+        \For{$i\gets m$ \textbf{down to} $j+1$}
+        \State $a\gets A_{j,j}$, $b\gets A_{i,j}$
+        \If{$b \neq 0$}
+        \State $r \gets \sqrt{a^2 + b^2}$
+        \State $c \gets a / r$, $s \gets b / r$
+        \State \Call{ApplyGivens}{$A,\,j,\,i,\,c,\,s,\,j\!:\!n$}
+        % Optionally also: \Call{ApplyGivens}{$Q,\,j,\,i,\,c,\,s,\,1\!:\!m$}
+        \EndIf
+        \EndFor
+        \EndFor
+        \State \Return $A$ \Comment{now contains $R$}
+        % \Return $Q,R$ \Comment{if $Q$ was accumulated}
+        \EndFunction
+
+        \Function{ApplyGivens}{$M,i,k,c,s,\ell\!:\!u$}
+        \For{$j\gets \ell$ \textbf{to} $u$}
+        \State $t_i \gets c\,M_{i,j} + s\,M_{k,j}$
+        \State $t_k \gets -s\,M_{i,j} + c\,M_{k,j}$
+        \State $M_{i,j}\gets t_i$, $M_{k,j}\gets t_k$
+        \EndFor
+        \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+    \caption{QR by Hand-Friendly Givens Rotations}
+    \begin{algorithmic}[1]
+        \Require Square or tall matrix $A\in\mathbb{R}^{m\times n}$ \Comment{$m\ge n$ is typical}
+        \Ensure $A$ overwritten by upper-triangular $R$
+        \For{$j \gets 1$ \textbf{to} $n$}                       \Comment{work column by column}
+        \For{$i \gets m$ \textbf{down to} $j+1$}              \Comment{zero entries below the pivot}
+        \State $a \gets A_{j,j}$,\; $b \gets A_{i,j}$       \Comment{the 2-vector to rotate}
+        \If{$b \neq 0$}                                     \Comment{nothing to do if already zero}
+        \State $r \gets \sqrt{a^2 + b^2}$                 \Comment{Euclidean norm}
+        \State $c \gets a/r$,\; $s \gets -\,b/r$          \Comment{$G(a,b)\,[a\;b]^T=[r\;0]^T$}
+        \For{$k \gets j$ \textbf{to} $n$}                 \Comment{apply to remaining cols}
+        \State $u \gets A_{j,k}$,\; $v \gets A_{i,k}$
+        \State $A_{j,k} \gets c\,u - s\,v$
+        \State $A_{i,k} \gets s\,u + c\,v$
+        \EndFor
+        \EndIf
+        \EndFor
+        \EndFor
+        \Return $A$ \Comment{$A$ now \emph{is} the $R$ factor}
+    \end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Advantages and Use Cases}
+\begin{itemize}
+    \item Givens rotations are especially efficient for sparse matrices, as each rotation affects only two rows.
+    \item They are numerically stable due to the use of orthogonal transformations.
+    \item Widely used in least squares problems, QR decomposition, and iterative methods for eigenvalue problems.
+\end{itemize}
+
+\begin{example}{Givens rotation zeroing an entry}{givens-example}
+    Let $\mathbf{x} = (3, 4)^T$. To zero the second entry:
+    \[
+        r = \sqrt{3^2 + 4^2} = 5, \quad c = 3/5, \quad s = 4/5.
+    \]
+    The Givens rotation matrix is
+    \[
+        G = \begin{bmatrix}
+            3/5  & 4/5 \\
+            -4/5 & 3/5
+        \end{bmatrix},
+    \]
+    and
+    \[
+        G \begin{bmatrix} 3 \\ 4 \end{bmatrix} = \begin{bmatrix} 5 \\ 0 \end{bmatrix}.
+    \]
+\end{example}

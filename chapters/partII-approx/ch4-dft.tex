@@ -1,0 +1,184 @@
+\section{Discrete Fourier Transform (DFT)}
+
+\subsection{Motivation: From Fourier Series to DFT}
+The Discrete Fourier Transform (DFT) arises naturally when we sample a periodic function at finitely many points. While the classical Fourier series decomposes a function into sines and cosines (or complex exponentials) over a continuous interval, in practice we often work with discrete data: sampled signals, digital images, or numerical solutions. The DFT provides a way to analyze the frequency content of such discrete data, mirroring the role of the Fourier series for continuous functions.
+
+\subsection{Definition and Properties of the DFT}
+\begin{definition}{Discrete Fourier Transform}{dft}
+    Given a sequence $\{f_k\}_{k=0}^{N-1}$ (e.g., $N$ samples of a periodic function), the DFT produces a sequence $\{F_n\}_{n=0}^{N-1}$:
+    \begin{equation}
+        F_n = \sum_{k=0}^{N-1} f_k \, e^{-2\pi i n k / N}, \qquad n = 0, 1, \ldots, N-1.
+    \end{equation}
+    The inverse DFT reconstructs the original sequence:
+    \begin{equation}
+        f_k = \frac{1}{N} \sum_{n=0}^{N-1} F_n \, e^{2\pi i n k / N}, \qquad k = 0, 1, \ldots, N-1.
+    \end{equation}
+\end{definition}
+
+The DFT can be written as a matrix-vector multiplication:
+\begin{equation}
+    \mathbf{F} = \mathcal{F}_N \mathbf{f}
+\end{equation}
+where $\mathcal{F}_N$ is the $N \times N$ DFT matrix with entries $e^{-2\pi i jk / N}$.
+
+\begin{definition}{DFT Matrix}{dft-matrix}
+    The DFT matrix $\mathcal{F}_N$ is defined by
+    \begin{equation}
+        (\mathcal{F}_N)_{jk} = e^{-2\pi i jk / N} = \omega_N^{jk}, \qquad \omega_N = e^{-2\pi i / N}, \quad j, k = 0, \ldots, N-1.
+    \end{equation}
+    This matrix is a Vandermonde matrix built from the $N$th roots of unity.
+\end{definition}
+
+\paragraph{Key Properties}
+\begin{itemize}
+    \item \textbf{Linearity:} The DFT is a linear transformation.
+    \item \textbf{Periodicity:} Both input and output sequences are periodic with period $N$.
+    \item \textbf{Orthogonality:} The complex exponentials $e^{2\pi i n k / N}$ form an orthogonal basis for $\mathbb{C}^N$.
+    \item \textbf{Parseval's Theorem (Discrete):}
+          \[
+              \sum_{k=0}^{N-1} |f_k|^2 = \frac{1}{N} \sum_{n=0}^{N-1} |F_n|^2
+          \]
+\end{itemize}
+
+\subsection{Fast Fourier Transform (FFT)}
+
+For large $N$, direct computation of the DFT via matrix multiplication requires $O(N^2)$ operations. The \textbf{Fast Fourier Transform (FFT)} is a family of algorithms that compute the DFT much more efficiently, in $O(N \log N)$ time, by exploiting symmetries in the roots of unity.
+
+\subsubsection{Recursive Divide-and-Conquer Structure}
+The most common FFT algorithm (Cooley--Tukey) recursively splits the DFT of a sequence of length $N$ (assumed even) into two DFTs of length $N/2$: one for the even-indexed elements and one for the odd-indexed elements. These are then combined using so-called \emph{butterfly operations}.
+
+\begin{algorithm}[H]
+    \caption{Radix-2 Cooley--Tukey FFT Algorithm}
+    \begin{algorithmic}[1]
+        \Require Sequence $f = (f_0, \ldots, f_{N-1})$ of length $N = 2^m$
+        \Ensure DFT $F = (F_0, \ldots, F_{N-1})$
+        \Function{FFT}{$f$}
+        \If{$N = 1$}
+        \State \Return $f$
+        \Else
+        \State Split $f$ into even and odd indexed parts:
+        \State $f^{(\mathrm{even})}_k = f_{2k}$
+        \State $f^{(\mathrm{odd})}_k = f_{2k+1}$
+        \State $E \gets$ \Call{FFT}{$f^{(\text{even})}$}
+        \State $O \gets$ \Call{FFT}{$f^{(\text{odd})}$}
+        \For{$n = 0$ \textbf{to} $N/2-1$}
+        \State $\omega \gets e^{-2\pi i n / N}$ \hfill (\textbf{twiddle factor})
+        \State $F_n \gets E_n + \omega \cdot O_n$
+        \State $F_{n+N/2} \gets E_n - \omega \cdot O_n$
+        \EndFor
+        \State \Return $F$
+        \EndIf
+        \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
+\paragraph{Twiddle Factor} The \textbf{twiddle factor} $e^{-2\pi i n / N}$ is the complex exponential that introduces the necessary phase shift when combining the even and odd DFTs.
+
+\paragraph{Butterfly Operation} The basic computation in the FFT is the \emph{butterfly operation}, which combines two values (from the even and odd DFTs) using the twiddle factor:
+\[
+    \begin{pmatrix}
+        F_n \\
+        F_{n+N/2}
+    \end{pmatrix}
+    =
+    \begin{pmatrix}
+        1 & \mathcal{F}_N^n  \\
+        1 & -\mathcal{F}_N^n
+    \end{pmatrix}
+    \begin{pmatrix}
+        E_n \\
+        O_n
+    \end{pmatrix}
+\]
+for $n = 0, \ldots, N/2-1$.
+
+\paragraph{Complexity and Efficiency}
+The FFT reduces the computational complexity of the DFT from $O(N^2)$ to $O(N \log N)$ by recursively breaking the problem into smaller subproblems and combining their results efficiently.
+
+\subsection{Examples and Interpretation}
+
+\begin{example}{DFT Matrix for $N=4$}{dft-matrix-4}
+    For $N = 4$, the primitive 4th root of unity is $\omega_4 = e^{-2\pi i / 4} = i$. The DFT matrix is
+    \[
+        \mathcal{F}_4 =
+        \begin{pmatrix}
+            1 & 1  & 1  & 1  \\
+            1 & i  & -1 & -i \\
+            1 & -1 & 1  & -1 \\
+            1 & -i & -1 & i
+        \end{pmatrix}
+    \]
+    Thus, for $\mathbf{f} = (f_0, f_1, f_2, f_3)^\top$, the DFT is $\mathbf{F} = \mathcal{F}_4 \mathbf{f}$.
+\end{example}
+
+\begin{example}{DFT of a Simple Sequence}{dft-example}
+    Let $N = 4$ and $f_0 = 1, f_1 = 0, f_2 = -1, f_3 = 0$. Compute the DFT:
+    \begin{align*}
+        F_0 & = 1 + 0 + (-1) + 0 = 0                                                                           \\
+        F_1 & = 1 + 0 \cdot e^{-i\pi/2} + (-1) \cdot e^{-i\pi} + 0 \cdot e^{-i3\pi/2} = 1 + 0 + 1 + 0 = 2      \\
+        F_2 & = 1 + 0 \cdot e^{-i\pi} + (-1) \cdot e^{-i2\pi} + 0 \cdot e^{-i3\pi} = 1 + 0 - 1 + 0 = 0         \\
+        F_3 & = 1 + 0 \cdot e^{-i3\pi/2} + (-1) \cdot e^{-i9\pi/2} + 0 \cdot e^{-i27\pi/2} = 1 + 0 + 1 + 0 = 2
+    \end{align*}
+    Thus, the DFT is $ (0, 2, 0, 2) $.
+\end{example}
+
+\begin{example}{DFT Example: $s = (1, 3, 1, -1)$}{dft-example2}
+    Let $N = 4$ and $s = (1, 3, 1, -1) \in \mathbb{R}^4$. The DFT is
+    \[
+        \hat{s}_k = \sum_{n=0}^{3} s_n e^{-2\pi i k n / 4}, \qquad k = 0,1,2,3.
+    \]
+    Compute each component:
+    \begin{align*}
+        \hat{s}_0 & = 1 + 3 + 1 + (-1) = 4                                  \\
+        \hat{s}_1 & = 1 + 3 e^{-i\pi/2} + 1 e^{-i\pi} + (-1) e^{-i3\pi/2}   \\
+                  & = 1 + 3i - 1 + i = 4i                                   \\
+        \hat{s}_2 & = 1 + 3 e^{-i\pi} + 1 e^{-i2\pi} + (-1) e^{-i3\pi}      \\
+                  & = 1 - 3 + 1 + 1 = 0                                     \\
+        \hat{s}_3 & = 1 + 3 e^{-i3\pi/2} + 1 e^{-i3\pi} + (-1) e^{-i9\pi/2} \\
+                  & = 1 - 3i - 1 - i = -4i
+    \end{align*}
+    So, the DFT is $\hat{s} = (4, 4i, 0, -4i)$.
+\end{example}
+
+\paragraph{Interpretation: Relation to Continuous Fourier Coefficients}
+The DFT coefficients $\hat{s}_k$ are discrete analogues of the continuous Fourier complex coefficients $c_k(f)$. For a sampled $2L$-periodic function $f(x)$ at $N$ equispaced points, the DFT coefficients approximate $c_k(f)$ up to normalization and scaling. As $N$ increases and the sampling becomes finer, the DFT coefficients converge (after normalization) to the continuous Fourier coefficients.
+
+\subsection{Applications}
+DFT and FFT are fundamental tools in:
+\begin{itemize}
+    \item Signal and image processing (filtering, compression)
+    \item Numerical solutions of differential equations (spectral methods)
+    \item Data analysis and pattern recognition
+\end{itemize}
+
+\subsection{Further Examples and Discussion}
+
+\subsubsection*{DFT Example: $s = (1, 3, 1, -1)$}
+
+Let $N = 4$ and $s = (1, 3, 1, -1) \in \mathbb{R}^4$. The DFT is
+\[
+    \hat{s}_k = \sum_{n=0}^{3} s_n e^{-2\pi i k n / 4}, \qquad k = 0,1,2,3.
+\]
+Compute each component:
+\begin{align*}
+    \hat{s}_0 & = 1 + 3 + 1 + (-1) = 4                                  \\
+    \hat{s}_1 & = 1 + 3 e^{-i\pi/2} + 1 e^{-i\pi} + (-1) e^{-i3\pi/2}   \\
+              & = 1 + 3i - 1 + i = 4i                                   \\
+    \hat{s}_2 & = 1 + 3 e^{-i\pi} + 1 e^{-i2\pi} + (-1) e^{-i3\pi}      \\
+              & = 1 - 3 + 1 + 1 = 0                                     \\
+    \hat{s}_3 & = 1 + 3 e^{-i3\pi/2} + 1 e^{-i3\pi} + (-1) e^{-i9\pi/2} \\
+              & = 1 - 3i - 1 - i = -4i
+\end{align*}
+So, the DFT is $\hat{s} = (4, 4i, 0, -4i)$.
+
+\paragraph{Relation to Fourier Complex Coefficients}
+The DFT coefficients $\hat{s}_k$ are discrete analogues of the continuous Fourier complex coefficients $c_k(f)$. For a sampled $2L$-periodic function $f(x)$ at $N$ equispaced points, the DFT coefficients approximate $c_k(f)$ up to normalization and scaling. Specifically, as $N$ increases and the sampling becomes finer, the DFT coefficients converge (after normalization) to the continuous Fourier coefficients.
+
+\subsubsection*{DFT as Matrix Multiplication and FFT Complexity}
+The DFT can be written as a matrix-vector multiplication:
+\[
+    \hat{s} = F_N s
+\]
+where $F_N$ is the $N \times N$ matrix with entries $(F_N)_{jk} = e^{-2\pi i jk / N}$.
+A general matrix-vector multiplication requires $O(N^2)$ operations. However, the DFT matrix has a special structure: its entries are powers of the primitive $N$th root of unity. This allows the DFT to be computed recursively by dividing the problem into smaller DFTs of size $N/2$ (for $N$ a power of $2$), combining the results using the so-called "butterfly" operations.
+This recursive approach is the basis of the Fast Fourier Transform (FFT) algorithm, which reduces the computational complexity to $O(N \log N)$. The FFT exploits the symmetry and periodicity of the complex exponentials, making it much faster than a naive matrix multiplication for large $N$.

@@ -1,0 +1,171 @@
+\chapter{Introduction to Linear Systems}
+\section{Linear Systems in Numerical Mathematics}
+
+Linear systems of equations are fundamental in numerical mathematics, arising in applications from finite-difference discretisation of differential equations to least-squares data fitting.
+
+A system is written as
+\begin{equation}
+    A\mathbf{x}=\mathbf{b}, \qquad A\in\mathbb{R}^{m\times n},\; \mathbf{x}\in\mathbb{R}^{n},\; \mathbf{b}\in\mathbb{R}^{m}.
+\end{equation}
+
+\begin{itemize}
+    \item \emph{Unknown vector:} $\mathbf{x} \in \mathbb{R}^n$ collects the $n$ variables to determine.
+    \item \emph{Coefficient matrix:} $A \in \mathbb{R}^{m \times n}$ encodes how the variables couple.
+    \item \emph{Right-hand side:} $\mathbf{b} \in \mathbb{R}^m$ represents the forcing, data, or boundary conditions.
+\end{itemize}
+
+\paragraph{Why linear systems matter:}
+They appear in engineering, physics, data science, and more. Efficient and stable solution methods are essential for practical computation.
+
+\paragraph{Types of linear systems:}
+\begin{itemize}
+    \item \textbf{Square systems} ($m=n$): Unique solution when $A$ is invertible.
+    \item \textbf{\textcolor{teal}{Over-determined}} ($m>n$): More equations than unknowns; solved via least-squares.
+    \item \textbf{\textcolor{orange}{Under-determined}} ($m<n$): Infinitely many solutions; requires additional constraints.
+    \item \textbf{\textcolor{purple}{Consistent/Inconsistent}}: Solution exists iff $\mathbf{b} \in \text{col}(A)$.
+    \item \textbf{\textcolor{red!70!black}{Ill-conditioned}}: Large $\kappa(A) \gg 1$; sensitive to perturbations, i.e. $\delta\mathbf{b} \neq 0$ can lead to $\delta\mathbf{x} \gg 0$.
+    \item \textbf{\textcolor{blue!70!black}{Well-posed}}: Satisfies existence, uniqueness, and stability; otherwise ill-posed.
+\end{itemize}
+
+
+\section{Solution Strategies}
+\subsection[Direct Methods]{Direct Methods: Factorization Approaches}
+Direct methods compute the exact solution $\mathbf{x}$ (up to round-off) in a finite sequence of operations, typically via matrix factorizations such as LU, Cholesky, or QR. These are robust and accurate for small to medium-sized problems but become computationally expensive and memory-intensive for large systems.
+
+\begin{itemize}
+    \item \emph{Gaussian Elimination}: For dense systems ($\mathcal{O}(n^{3})$)
+    \item \emph{LU, Cholesky}: For sparse or symmetric positive-definite (SPD) matrices
+    \item \emph{QR}: For least-squares and numerically stable eigenproblems
+\end{itemize}
+
+\subsection[Iterative Methods]{Iterative Methods: Stationary and Krylov Subspace Methods}
+Iterative methods start from an initial guess and refine the solution through repeated updates. They are especially effective for large, sparse systems where direct methods are impractical. Convergence depends on properties of $A$ (such as symmetry and positive-definiteness) and the choice of preconditioner.
+
+\begin{itemize}
+    \item \emph{Stationary schemes}: Jacobi, Gauss--Seidel, Successive Over-Relaxation (SOR)
+    \item \emph{Krylov methods}: Conjugate Gradient (CG), GMRES, BiCGSTAB
+\end{itemize}
+
+% \begin{tcolorbox}[title=Solution Strategies,colback=gray!3,colframe=blue!50!black]
+%     \begin{description}[nosep]
+%         \item[Direct methods]
+%               Deliver the exact (up to round-off) solution in a finite number of arithmetic operations.
+%               The classical workflow performs a \emph{factorisation} followed by inexpensive triangular solves.
+%               \begin{itemize}
+%                   \item \emph{Gaussian Elimination} for dense systems ($\mathcal{O}(n^{3})$)
+%                   \item \emph{LU, Cholesky} for sparse or symmetric positive-definite (SPD) matrices
+%                   \item \emph{QR} for least-squares and numerically stable eigenproblems
+%               \end{itemize}
+%         \item[Iterative methods]
+%               Build a sequence $(\mathbf{x}^{(k)})_{k\geq 0}$ that converges to $\mathbf{x}$.
+%               Each step has \emph{linear} or near-linear cost in sparsity patterns, making them attractive for very large systems.
+%               \begin{itemize}
+%                   \item \emph{Stationary schemes:} Jacobi, Gauss--Seidel, Successive Over-Relaxation (SOR)
+%                   \item \emph{Krylov methods:} Conjugate Gradient (CG), GMRES, BiCGSTAB
+%               \end{itemize}
+%     \end{description}
+% \end{tcolorbox}
+
+\subsection{Choosing a Method}
+\begin{itemize}
+    \item For dense $n\lesssim 10^{3}$ or moderately sparse \emph{one-off} solves, direct factorizations dominate.
+    \item When $n\gg 10^{4}$, memory and $\mathcal{O}(n^{3})$ work become prohibitive, and well-preconditioned iterative solvers excel.
+\end{itemize}
+
+\section{Numerical Issues in Solving Linear Systems}
+
+When solving linear systems numerically, it is crucial to understand:
+\begin{itemize}
+    \item \textbf{Conditioning:} Sensitivity of the problem to perturbations.
+    \item \textbf{Stability:} Robustness of the algorithm to errors during execution.
+    \item \textbf{Preconditioning:} Transforming the problem to accelerate convergence.
+\end{itemize}
+
+\subsection[Conditioning]{Conditioning: Sensitivity to Perturbations}
+The \emph{condition number} of a matrix $A$ is
+\begin{equation}
+    \kappa(A)=\|A\|\,\|A^{-1}\| \qquad (\kappa \geq 1).
+\end{equation}
+It measures how much errors in $\mathbf{b}$ (or round-off) can be amplified in the solution $\mathbf{x}$. Small $\kappa$ (well-conditioned) means the mapping $\mathbf{b}\mapsto\mathbf{x}$ is robust; large $\kappa$ indicates potential magnification of errors.
+
+\textbf{Error bound:} For a perturbed system $A\mathbf{x} = \mathbf{b} + \delta\mathbf{b}$, the relative error in the solution satisfies
+\begin{equation}
+    \frac{\|\delta\mathbf{x}\|}{\|\mathbf{x}\|} \leq \kappa(A) \frac{\|\delta\mathbf{b}\|}{\|\mathbf{b}\|}.
+\end{equation}
+This shows that $\kappa(A)$ bounds the amplification factor from data errors to solution errors.
+
+\textbf{Definitions:}
+\begin{itemize}
+    \item \textbf{Ill-conditioned:} $\kappa(A)$ is large; small changes in $\mathbf{b}$ or $A$ can cause large changes in $\mathbf{x}$.
+    \item \textbf{Rank-deficient:} $A$ does not have full rank; the system may have no or infinitely many solutions.
+    \item \textbf{Ill-posed:} The problem is not well-defined or is extremely sensitive to data/errors.
+\end{itemize}
+
+\subsection[Stability]{Stability: Algorithmic Robustness}
+A stable method does not amplify errors beyond what is unavoidable given the problem's conditioning. Stability is a property of the algorithm, not the problem.
+
+\textbf{Forward vs. backward stability:}
+\begin{itemize}[nosep]
+    \item \emph{Forward stable:} The computed solution $\hat{\mathbf{x}}$ satisfies $\|\mathbf{x} - \hat{\mathbf{x}}\| \leq C \epsilon_{\text{machine}} \kappa(A) \|\mathbf{x}\|$ for some modest constant $C$.
+    \item \emph{Backward stable:} The computed solution exactly solves a nearby problem: $A\hat{\mathbf{x}} = \mathbf{b} + \delta\mathbf{b}$ with $\|\delta\mathbf{b}\| \leq C \epsilon_{\text{machine}} \|A\| \|\hat{\mathbf{x}}\|$.
+\end{itemize}
+
+\textbf{Examples:}
+\begin{itemize}[nosep]
+    \item \emph{Gaussian elimination with partial pivoting:} Backward stable in practice
+    \item \emph{Householder QR:} Backward stable for least squares
+    \item \emph{Iterative refinement:} Can improve accuracy of direct solvers
+\end{itemize}
+
+\subsection[Preconditioning]{Preconditioning: Accelerating Iterative Solvers}
+Preconditioning transforms $A\mathbf{x}=\mathbf{b}$ into an equivalent system with better conditioning. The most common approach is \emph{left preconditioning}, where we solve
+\begin{equation}
+    M^{-1}A\mathbf{x} = M^{-1}\mathbf{b},
+\end{equation}
+where $M \approx A$ is chosen to be easily invertible and to improve the condition number $\kappa(M^{-1}A) \ll \kappa(A)$.
+
+\textbf{Purpose:} Reduce the condition number $\kappa(M^{-1}A) \ll \kappa(A)$ to accelerate convergence and improve numerical stability of iterative methods.
+
+\textbf{Implementation:} The preconditioner is applied \emph{within each iteration}, not as a preprocessing step. Iterative algorithms typically involve matrix-vector products that are preconditioned at every step.
+
+\textbf{Common preconditioners:}
+\begin{itemize}[nosep]
+    \item \emph{Diagonal (Jacobi):} $M = \diag(A)$ — simple but limited effectiveness
+    \item \emph{Incomplete LU (ILU):} $M \approx LU$ with sparsity constraints
+    \item \emph{Multigrid:} Hierarchical approach for PDEs on grids
+    \item \emph{Domain decomposition:} Parallel-friendly for large problems
+\end{itemize}
+
+\begin{figure}[htbp!]
+    \centering
+    \includestandalone[width=0.8\textwidth]{figures/preconditioning}
+    \caption{Preconditioning reshapes the transformation from elongated (high $\kappa$) to circular (low $\kappa$), dramatically improving iterative convergence rates.}
+    \label{fig:preconditioning}
+\end{figure}
+
+\begin{example}{Effect of Preconditioning on Condition Number}{preconditioning-example}
+Consider the ill-conditioned matrix
+\[
+A = \begin{bmatrix} 4 & 3 \\ 3 & 4 \end{bmatrix}, \quad \kappa(A) = \frac{\lambda_{\max}}{\lambda_{\min}} = \frac{7}{1} = 7.
+\]
+Using diagonal preconditioning $M = \diag(A) = \diag(4, 4)$, we get
+\[
+M^{-1}A = \frac{1}{4}\begin{bmatrix} 4 & 0 \\ 0 & 4 \end{bmatrix} \begin{bmatrix} 4 & 3 \\ 3 & 4 \end{bmatrix} = \begin{bmatrix} 1 & 0.75 \\ 0.75 & 1 \end{bmatrix}.
+\]
+The eigenvalues of $M^{-1}A$ are $\{1.75, 0.25\}$, giving $\kappa(M^{-1}A) = 1.75/0.25 = 7$. While this simple example shows no improvement, more sophisticated preconditioners like ILU can dramatically reduce $\kappa$ for larger, sparser systems.
+\end{example}
+
+\paragraph{Rule of thumb.}
+Iterative solvers converge in roughly $\mathcal{O}\big(\sqrt{\kappa}\big)$ iterations (CG) when a suitable preconditioner brings $\kappa$ close to $1$.
+
+
+\section{Summary and Practical Recommendations}
+
+\begin{itemize}
+    \item \textbf{Method selection:} Choose direct methods for small ($n \lesssim 10^3$) or moderately sized dense problems. Use iterative methods for large, sparse systems where $n \gg 10^4$.
+    \item \textbf{Conditioning matters:} Always estimate $\kappa(A)$ before solving. If $\kappa(A) \approx 1/\epsilon_{\text{machine}}$, expect difficulties.
+    \item \textbf{Stability is crucial:} Prefer backward stable algorithms (e.g., Householder QR, Gaussian elimination with partial pivoting).
+    \item \textbf{Preconditioning is often essential:} For iterative methods, a good preconditioner can reduce iteration counts from thousands to dozens.
+    \item \textbf{Sparsity structure:} Exploit problem structure (symmetry, positive-definiteness, bandedness) to choose specialized algorithms.
+    \item \textbf{Error analysis:} Always verify your solution, especially for ill-conditioned problems. Compute residuals $\|\mathbf{b} - A\hat{\mathbf{x}}\|$ and relative errors.
+\end{itemize}

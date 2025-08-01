@@ -1,0 +1,148 @@
+
+\chapter{Runge-Kutta Methods}
+\label{chap:rk}
+
+\section{Introduction and Motivation}
+\label{sec:rk:intro}
+Runge-Kutta (RK) methods are a family of one-step methods for solving initial value problems of the form
+\begin{equation}
+  y'(t) = f(t, y(t)), \qquad y(t_0) = y_0.
+\end{equation}
+Unlike linear multistep methods, RK methods use only the current value $(t_n, y_n)$ to advance the solution, but achieve high order by evaluating $f$ at several intermediate points within each step. The classical fourth-order Runge-Kutta method (RK4) is especially popular due to its balance of accuracy and simplicity.
+
+\section{General Formulation of s-Stage Runge-Kutta Methods}
+\label{sec:rk:general}
+An $s$-stage Runge-Kutta method advances the solution from $y_n$ to $y_{n+1}$ as follows:
+\begin{align*}
+  k_i &= f\left(t_n + c_i h,\; y_n + h \sum_{j=1}^s a_{ij} k_j\right), \qquad i = 1, \ldots, s, \\
+  y_{n+1} &= y_n + h \sum_{i=1}^s b_i k_i.
+\end{align*}
+The coefficients $a_{ij}$, $b_i$, and $c_i$ fully determine the method.
+
+\section{The Butcher Tableau}
+\label{sec:rk:butcher}
+The coefficients of a Runge-Kutta method are conveniently summarized in the \emph{Butcher tableau}:
+\begin{equation*}
+\begin{array}{c|ccc}
+  c_1 & a_{11} & \cdots & a_{1s} \\
+  \vdots & \vdots & & \vdots \\
+  c_s & a_{s1} & \cdots & a_{ss} \\
+  \hline
+      & b_1    & \cdots & b_s
+\end{array}
+\end{equation*}
+where $a_{ij}$, $b_i$, and $c_i$ are the method's parameters. Explicit methods have $a_{ij} = 0$ for $j \geq i$.
+
+\subsection{Example: Classical RK4}
+The classical fourth-order Runge-Kutta method (RK4) has the tableau:
+\begin{equation*}
+\begin{array}{c|cccc}
+  0   & 0   & 0   & 0   & 0   \\
+  1/2 & 1/2 & 0   & 0   & 0   \\
+  1/2 & 0   & 1/2 & 0   & 0   \\
+  1   & 0   & 0   & 1   & 0   \\
+  \hline
+      & 1/6 & 1/3 & 1/3 & 1/6
+\end{array}
+\end{equation*}
+This method is widely used for its accuracy and simplicity.
+\section{Order Conditions and Properties}
+\label{sec:rk:order}
+The accuracy of a Runge-Kutta method is determined by its coefficients. A method is said to be of order $p$ if its local truncation error is $\mathcal{O}(h^{p+1})$. Achieving higher order requires more stages and the satisfaction of increasingly intricate algebraic conditions, known as Butcher's order conditions.
+
+For a Runge-Kutta method to be \emph{consistent} (i.e., at least first-order accurate), the coefficients must satisfy
+\begin{equation}
+  \sum_{i=1}^s b_i = 1,
+\end{equation}
+which ensures the method reproduces the exact solution for constant functions.
+
+More generally, the order conditions up to $p=4$ are as follows:
+\begin{itemize}
+  \item \textbf{Order 1 (Consistency):}
+    \begin{equation}
+      \sum_{i=1}^s b_i = 1
+    \end{equation}
+  \item \textbf{Order 2:}
+    \begin{equation}
+      \sum_{i=1}^s b_i c_i = \frac{1}{2}
+    \end{equation}
+  \item \textbf{Order 3:}
+    \begin{align}
+      \sum_{i=1}^s b_i c_i^2 &= \frac{1}{3} \\
+      \sum_{i=1}^s b_i \sum_{j=1}^s a_{ij} c_j &= \frac{1}{6}
+    \end{align}
+  \item \textbf{Order 4:}
+    \begin{align}
+      \sum_{i=1}^s b_i c_i^3 &= \frac{1}{4} \\
+      \sum_{i=1}^s b_i c_i \sum_{j=1}^s a_{ij} c_j &= \frac{1}{8} \\
+      \sum_{i=1}^s b_i \left(\sum_{j=1}^s a_{ij} c_j^2\right) &= \frac{1}{12} \\
+      \sum_{i=1}^s b_i \sum_{j=1}^s a_{ij} \sum_{k=1}^s a_{jk} c_k &= \frac{1}{24}
+    \end{align}
+\end{itemize}
+
+\section{Stability and Applications}
+\label{sec:rk:stability}
+Stability analysis for RK methods often involves applying the method to the test equation $y' = \lambda y$. The stability region is the set of $z = \lambda h$ for which the numerical solution does not grow. Explicit RK methods are not suitable for stiff problems, while implicit RK methods (e.g., Gauss, Radau, Lobatto) are designed for such cases.
+
+\section{Exercises and Solutions}
+
+\subsection*{Problem 5. (Ordinary Differential Equations)}
+
+\textbf{a) Stages and Formulation from Butcher Tableau}
+
+Given the tableau (reformatted for clarity):
+\[
+\begin{array}{c|cccc}
+0   & 0   & 0   & 0   & 0   \\
+\frac{1}{2} & \frac{1}{2} & 0   & 0   & 0   \\
+\frac{1}{2} & 0   & \frac{1}{2} & 0   & 0   \\
+1   & 0   & 0   & 1   & 0   \\
+\hline
+  & \frac{1}{6} & \frac{1}{3} & \frac{1}{3} & \frac{1}{6}
+\end{array}
+\]
+There are $s=4$ stages.
+
+The method is:
+\begin{align*}
+K_1 &= f(t_n, y_n) \\
+K_2 &= f\left(t_n + \frac{1}{2}h,\, y_n + \frac{1}{2}h K_1\right) \\
+K_3 &= f\left(t_n + \frac{1}{2}h,\, y_n + \frac{1}{2}h K_2\right) \\
+K_4 &= f\left(t_n + h,\, y_n + h K_3\right) \\
+y_{n+1} &= y_n + \frac{h}{6}(K_1 + 2K_2 + 2K_3 + K_4)
+\end{align*}
+
+\textbf{b) Order 3 Conditions for 3-stage RK}
+
+Given tableau:
+\[
+\begin{array}{c|ccc}
+0 & 0 & 0 & 0 \\
+\frac{1}{2} & \frac{1}{2} & 0 & 0 \\
+1 & a_{31} & a_{32} & 0 \\
+\hline
+  & b_1 & b_2 & b_3
+\end{array}
+\]
+Order 3 conditions:
+\begin{align*}
+b_1 + b_2 + b_3 &= 1 \\
+b_2 \cdot \frac{1}{2} + b_3 \cdot 1 &= \frac{1}{2} \\
+b_2 \cdot \left(\frac{1}{2}\right)^2 + b_3 \cdot 1^2 &= \frac{1}{3} \\
+b_3 a_{32} \cdot \frac{1}{2} &= \frac{1}{6}
+\end{align*}
+Gives the coefficients:
+\[
+a_{31} = -1,\quad a_{32} = 2,\quad b_1 = \frac{1}{6},\quad b_2 = \frac{2}{3},\quad b_3 = \frac{1}{6}
+\]
+
+\textbf{c) Maximum Order for Explicit RK with $s=4$}
+
+For the test equation $y' = y$, $y(0) = y_0$, the Taylor expansion of $y(h)$ is:
+\[
+y(h) = y_0 + h y_0 + \frac{h^2}{2} y_0 + \frac{h^3}{6} y_0 + \frac{h^4}{24} y_0 + \cdots
+\]
+An explicit $s$-stage RK method can match the Taylor expansion up to $h^s$ but not higher, since it only uses $s$ function evaluations per step. Thus, the order cannot exceed $s$.
+
+\section{Summary}
+Runge-Kutta methods provide a flexible and powerful class of one-step methods for ODEs. The Butcher tableau offers a compact notation for their coefficients. Explicit RK methods are easy to implement and widely used for non-stiff problems, while implicit variants are important for stiff systems.

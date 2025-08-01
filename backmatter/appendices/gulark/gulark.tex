@@ -1,0 +1,307 @@
+\documentclass[a4paper,10pt,landscape]{article}
+\usepackage[margin=0.3cm]{geometry}
+
+% Essential packages
+\usepackage{multicol}
+\usepackage{mathtools}
+\usepackage{amsmath,amsfonts,amssymb}
+
+\usepackage{fontspec}         % Font selection for LuaLaTeX
+\usepackage{unicode-math}     % Math font support for LuaLaTeX/XeLaTeX
+\usepackage[final]{microtype} % Better typography
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{xcolor}
+
+\setmainfont{Fira Sans}
+\setsansfont{IBM Plex Sans Condensed}
+\setmonofont{Fira Code}
+\setmathfont{Fira Math}[Scale=MatchLowercase]
+\setmathfont[range={\mathcal,\mathscr,\mathbb,\mathfrak,\top,\Re,\Im,\ddots,\vdots,\setminus,\triangleright}]{STIX Two Math}
+
+% Math commands from trymtex.sty
+\newcommand{\ep}{\varepsilon}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+
+% Compact spacing
+\setlength{\abovedisplayskip}{-4pt}
+\setlength{\belowdisplayskip}{-4pt}
+\setlength{\abovedisplayshortskip}{-4pt}
+\setlength{\belowdisplayshortskip}{-4pt}
+\setlength{\jot}{-4pt}
+\setlength{\columnsep}{4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1pt}
+
+% List formatting
+\setlist[itemize]{leftmargin=1em,nosep,topsep=0pt}
+\setlist[description]{style=unboxed,leftmargin=0em,labelsep=0.4em,nosep,font=\scriptsize\bfseries}
+\setlist[enumerate]{leftmargin=1em,label=\arabic*.,nosep}
+
+% Section formatting with colors
+\titleformat{\section}{\normalfont\small\bfseries\color{teal!90!black}}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\normalfont\footnotesize\bfseries\color{orange!90!black}}{\thesubsection}{0.3em}{}
+\titlespacing{\section}{0pt}{3pt}{2pt}
+\titlespacing{\subsection}{0pt}{2pt}{1pt}
+
+\pagestyle{empty}
+
+\begin{document}
+\begin{multicols*}{3}
+    \scriptsize
+    \section*{Linear Algebra}
+    \begin{description}
+        \item[Vector norms:] $\norm{\mathbf{x}}_1 = \sum_i |x_i|$, $\norm{\mathbf{x}}_2 = \sqrt{\sum_i x_i^2}$, $\norm{\mathbf{x}}_\infty = \max_i |x_i|$
+        \item[Matrix norms:] $\norm{A}_1 = \max_j \sum_i |a_{ij}|$ (col sum), $\norm{A}_\infty = \max_i \sum_j |a_{ij}|$ (row sum), $\norm{A}_2 = \sqrt{\lambda_{\max}(A^TA)}$, $\norm{A}_F = \sqrt{\sum_{i,j} a_{ij}^2}$ (Frobenius)
+        \item[Eigenvalues:] $A\mathbf{v} = \lambda\mathbf{v}$. Characteristic poly: $\det(A-\lambda I) = 0$
+        \item[SVD:] $A = U\Sigma V^T$ with $U,V$ orthogonal, $\Sigma$ diagonal. $\sigma_{\max} = \norm{A}_2$, $\kappa_2(A) = \sigma_{\max}/\sigma_{\min}$
+        \item[Spectral radius:] $\rho(A) = \max_i |\lambda_i| \leq \norm{A}$ for any matrix norm
+        \item[Strictly diagonally dominant (SDD):] $|a_{ii}| > \sum_{j \neq i} |a_{ij}|$ for all $i$. Guarantees non-singular matrix and convergence of Jacobi/Gauss-Seidel
+        \item[Matrix classes:] SPD (symmetric positive definite): $A = A^T$ and $\mathbf{x}^T A \mathbf{x} > 0$ for $\mathbf{x} \neq \mathbf{0}$. Orthogonal: $Q^TQ = I$. Unitary: $U^*U = I$
+        \item[Rank:] $\text{rank}(A) = $ number of linearly independent rows/cols = number of nonzero singular values
+        \item[Determinant properties:] $\det(AB) = \det(A)\det(B)$, $\det(A^T) = \det(A)$, $\det(A^{-1}) = 1/\det(A)$
+        \item[Trace:] $\text{tr}(A) = \sum_i a_{ii} = \sum_i \lambda_i$. $\text{tr}(AB) = \text{tr}(BA)$
+        \item[Matrix inverses:] $(AB)^{-1} = B^{-1}A^{-1}$, $(A^T)^{-1} = (A^{-1})^T$. For SPD: $A^{-1}$ is also SPD
+    \end{description}
+
+    \section*{Non-linear Equations \& Fixed-Point}
+    \begin{description}
+        \item[Banach FPT:] A self map $g$ on a complete metric space $X$ is a contraction if $\exists\, 0<\kappa<1$ such that $\abs{g(x)-g(y)} \leq \kappa\abs{x-y}$ for all $x,y$. Then $\mathbf{x}^{(k+1)}=g(\mathbf{x}^{(k)})$ converges to unique fixed point. Error: $\abs{\mathbf{x}^{(k)}-\mathbf{x}^*} \leq \frac{\kappa^k}{1-\kappa}\abs{\mathbf{x}^{(1)}-\mathbf{x}^{(0)}}$
+        \item[General FP:] Starting with $\mathbf{x}^{(0)}$, generate $\mathbf{x}^{(k+1)} = g(\mathbf{x}^{(k)})$. Convergence requires $g$ to be a contraction on a region containing the fixed point.
+        \item[Newton's method:] For $f(x)=0$ with $f: \R^n\to\R^n$: $\mathbf{x}^{(k+1)} = \mathbf{x}^{(k)} - J_f(\mathbf{x}^{(k)})^{-1}f(\mathbf{x}^{(k)})$. Scalar: $x_{k+1} = x_k - \frac{f(x_k)}{f'(x_k)}$. Locally quadratically convergent.
+        \item[Order $p$:] $\lim_{k\to\infty} \frac{\abs{\mathbf{x}^{(k+1)}-\mathbf{x}^*}}{\abs{\mathbf{x}^{(k)}-\mathbf{x}^*}^p} = C \neq 0$
+        \item[Conditioning:] For simple root $\mathbf{x}^*$ of $f$, relative condition number $\approx \frac{1}{\abs{\mathbf{x}^* f'(\mathbf{x}^*)}}$
+    \end{description}
+
+    \section*{Linear Systems}
+    \subsection*{Direct Methods}
+    \begin{description}
+        \item[Gaussian elimination:] $O(n^3/3)$ flops for $n \times n$ system. Forward elimination + back substitution
+        \item[Elimination step:] For pivot row $k$: $l_{j,k} = a_{j,k}/a_{k,k}$ (requires $a_{k,k} \neq 0$). Update: $a_{j,p} \leftarrow a_{j,p} - l_{j,k}a_{k,p}$, $b_j \leftarrow b_j - l_{j,k}b_k$ for $j>k$, $p \geq k+1$
+        \item[Partial pivoting:] Choose largest $|a_{j,k}|$ in column $k$ below diagonal as pivot. Essential for numerical stability
+        \item[LU factorization:] $PA = LU$ with permutation $P$, unit lower triangular $L$, upper triangular $U$. Solve $L\mathbf{y} = P\mathbf{b}$ (forward), then $U\mathbf{x} = \mathbf{y}$ (backward)
+        \item[Cholesky:] For SPD matrix: $A = LL^T$ with $L$ lower triangular, positive diagonal. $O(n^3/6)$ flops, no pivoting needed. Fails if $A$ not SPD
+        \item[QR decomposition:] $A = QR$ with $Q$ orthonormal, $R$ upper triangular. For $A\mathbf{x} = \mathbf{b}$: solve $R\mathbf{x} = Q^T\mathbf{b}$. Cost: $O(2n^3/3)$ flops
+        \item[Householder reflectors:] $H = I - 2\mathbf{v}\mathbf{v}^T/\|\mathbf{v}\|_2^2$ where $\mathbf{v} = \mathbf{x} \pm \|\mathbf{x}\|_2\mathbf{e}_1$ (choose sign to avoid cancellation). More stable than Gram-Schmidt
+        \item[Givens rotations:] Zero element $(j,i)$ using $G_{ij}(\theta)$ where $c = \cos\theta = \frac{a_{ii}}{\sqrt{a_{ii}^2+a_{ji}^2}}$, $s = \sin\theta = \frac{a_{ji}}{\sqrt{a_{ii}^2+a_{ji}^2}}$
+        \item[Gram-Schmidt:] $\mathbf{q}_1 = \mathbf{a}_1/\|\mathbf{a}_1\|_2$. For $k \geq 2$: $\mathbf{u}_k = \mathbf{a}_k - \sum_{j=1}^{k-1}(\mathbf{a}_k^T\mathbf{q}_j)\mathbf{q}_j$, $\mathbf{q}_k = \mathbf{u}_k/\|\mathbf{u}_k\|_2$. Numerically unstable; prefer modified GS or Householder
+        \item[Least squares:] Minimize $\|\mathbf{b} - A\mathbf{x}\|_2^2$. Normal equations: $A^TA\mathbf{x} = A^T\mathbf{b}$ (condition number $\kappa_2(A^TA) = \kappa_2(A)^2$). QR method: $R\mathbf{x} = Q^T\mathbf{b}$ (condition number $\kappa_2(A)$). Prefer QR for better stability
+    \end{description}
+
+    \subsection*{Conditioning \& Spectra}
+    \begin{description}
+        \item[Condition number:] $\kappa(A) = \norm{A}\norm{A^{-1}}$. Measures sensitivity of $x$ in $Ax=\mathbf{b}$
+        \item[Gershgorin discs:] Each eigenvalue $\lambda \in S_j = \{z \in \mathbb{C}: \abs{z-a_{jj}} \leq \sum_{k\neq j}\abs{a_{jk}}\}$
+    \end{description}
+
+    \subsection*{Iterative Methods}
+    \begin{description}
+        \item[General form:] $\mathbf{x}^{(k+1)} = B\mathbf{x}^{(k)} + \mathbf{f}$ where $B$ is iteration matrix, $\mathbf{f}$ constant vector
+        \item[Convergence:] Method converges iff $\rho(B) < 1$ (spectral radius). Rate: $\|\mathbf{e}^{(k)}\| \leq \rho(B)^k \|\mathbf{e}^{(0)}\|$
+        \item[Richardson:] $\mathbf{x}^{(k+1)} = \mathbf{x}^{(k)} + \omega(\mathbf{b} - A\mathbf{x}^{(k)})$. Optimal $\omega = \frac{2}{\lambda_{\min} + \lambda_{\max}}$ (for SPD $A$). Converges if $0 < \omega < \frac{2}{\lambda_{\max}}$
+        \item[Jacobi:] Split $A = D + L + U$. $B_J = -D^{-1}(L+U)$:
+              $$x_i^{(k+1)} = \frac{1}{a_{ii}}\left[b_i - \sum_{j \neq i}a_{ij}x_j^{(k)}\right]$$
+              Converges if $A$ strictly diagonally dominant or $\rho(B_J) < 1$
+        \item[Gauss-Seidel:] $B_{GS} = -(D+L)^{-1}U$:
+              $$x_i^{(k+1)} = \frac{1}{a_{ii}}\left[b_i - \sum_{j<i}a_{ij}x_j^{(k+1)} - \sum_{j>i}a_{ij}x_j^{(k)}\right]$$
+              Always converges for SPD matrices
+        \item[SOR:] Parameter $\omega \in (0,2)$. $B_{\omega} = (D+\omega L)^{-1}[(1-\omega)D - \omega U]$:
+              $$x_i^{(k+1)} = (1-\omega)x_i^{(k)} + \frac{\omega}{a_{ii}}\left[b_i - \sum_{j<i}a_{ij}x_j^{(k+1)} - \sum_{j>i}a_{ij}x_j^{(k)}\right]$$
+              Optimal $\omega_{\text{opt}} = \frac{2}{1+\sqrt{1-\rho(B_J)^2}}$ for SPD. Converges iff $\omega \in (0,2)$ for SPD
+        \item[Convergence rates:] For SPD: $\rho(B_{\omega_{\text{opt}}}) < \rho(B_{GS}) = \rho(B_J)^2 < \rho(B_J)$
+    \end{description}
+
+    % --- Column 2 ---
+    \section*{Interpolation \& Splines}
+    \subsection*{Lagrange \& Newton}
+    \begin{description}
+        \item[Lagrange form:] $P_n(x) = \sum_{j=0}^n f(x_j)L_j(x)$, $L_j(x) = \prod_{i\neq j}\frac{x-x_i}{x_j-x_i}$
+        \item[Newton form:] Uses divided differences $f[x_0,x_1,\ldots,x_k]$ recursively: $P_n(x) = f[x_0] + f[x_0,x_1](x-x_0) + \ldots + f[x_0,\ldots,x_n]\prod_{j=0}^{n-1}(x-x_j)$
+        \item[Divided differences:] $f[x_i] = f(x_i)$, $f[x_i,x_{i+1}] = \frac{f[x_{i+1}]-f[x_i]}{x_{i+1}-x_i}$, $f[x_i,\ldots,x_{i+k}] = \frac{f[x_{i+1},\ldots,x_{i+k}] - f[x_i,\ldots,x_{i+k-1}]}{x_{i+k}-x_i}$
+        \item[Error bound:] For $f \in C^{n+1}[a,b]$ and distinct nodes $x_0,\ldots,x_n$:
+              \[f(x) - P_n(x) = \frac{f^{(n+1)}(\xi)}{(n+1)!}\prod_{j=0}^n(x-x_j)\]
+              % Chebyshev nodes $x_j = \cos\left(\frac{(2j+1)\pi}{2(n+1)}\right)$ minimize $\max_{x \in [-1,1]}\left|\prod_{j=0}^n(x-x_j)\right|$
+        % \item[Runge phenomenon:] High-degree polynomial interpolation with equispaced nodes can exhibit large oscillations. Use Chebyshev nodes or splines instead
+    \end{description}
+
+    \subsection*{Splines}
+    \begin{description}
+        \item[Definition.] A (univariate $s: \R \to \R$) spline of degree $k\ge 1$ on the partition $a=x_0<\cdots<x_n=b$ is
+              \[
+                  \mathcal{S}_k := \left\{\, s\in C^{k-1}[a,b] \;:\; s|_{[x_i,x_{i+1}]} \in \mathbb{P}_k \text{ for } i=0,\ldots,n-1 \,\right\},
+              \]
+              $\mathbb{P}_k$ denotes the polynomials $s(x) = p_i(x)$ of $\deg(p_i) \le k$.
+
+        \item[Dimension.]
+              \[
+                  \dim(\mathcal{S}_k) = n(k+1) - k(n-1) = n + k.
+              \]
+              (There are $n$ pieces, each with $k+1$ coefficients, and $k$ continuity constraints at each of the $n-1$ interior knots.)
+
+        \item[Knot vector:] $\Delta = \{x_0, x_1, \ldots, x_n\}$ with $n+1$ knots defining $n$ subintervals
+        \item[Error bound.] If $f\in C^{k+1}[a,b]$ and $s\in\mathcal{S}_k$ is an interpolatory spline (made unique by adding $k-1$ extra conditions), then on a quasi-uniform mesh
+              \[
+                  \|f - s\|_\infty \le C\, h^{k+1}\,\|f^{(k+1)}\|_\infty, \quad h=\max_i h_i, \quad h_i=x_{i+1}-x_i
+              \]
+              for a const. $C$ indep. of $h$ (but dep. on $k$).
+        \item[Piecewise linear ($k=1$):] For $s_1 \in C^0$, $x\in[x_i,x_{i+1}]$,
+              \[
+                  s_1(x)= y_i + \frac{y_{i+1}-y_i}{h_i}\,(x-x_i),
+                  \qquad \|f-s_1\|_\infty = O(h^2).
+              \]
+        \item[Piecewise quadratic ($k=2$).] $s_2\in C^1$ and, with one additional condition beyond nodal interpolation (since $k-1=1$),
+              \[
+                  \|f-s_2\|_\infty = O(h^3).
+              \]
+    \end{description}
+
+    \subsection*{Cubic Splines}
+    \begin{description}
+        \item[Definition:] $s \in C^{2}[a,b]$, $s|_{[x_i,x_{i+1}]} \in \mathbb{P}_3$ on $a=x_0 < x_1 < \ldots < x_n=b$
+        \item[Error bound:] For $f \in C^4[a,b]$: $\norm{f - s}_\infty \leq \frac{5h^4}{384}\norm{f^{(4)}}_\infty$ where $h = \max_i h_i$
+        \item[Second derivative form:] Let $h_i=x_{i+1}-x_i$, $z_i=s''(x_i)$:
+              \[s_i(x) = \frac{z_{i+1}}{6h_i}(x-x_i)^3 + \frac{z_i}{6h_i}(x_{i+1}-x)^3 + \left(\frac{y_{i+1}}{h_i} - \frac{z_{i+1}h_i}{6}\right)(x-x_i) + \left(\frac{y_i}{h_i} - \frac{z_ih_i}{6}\right)(x_{i+1}-x)\]
+        \item[Tridiagonal system:] For $i=1,\ldots,n-1$:
+              \[h_{i-1}z_{i-1} + 2(h_{i-1}+h_i)z_i + h_iz_{i+1} = 6\left[\frac{y_{i+1}-y_i}{h_i} - \frac{y_i-y_{i-1}}{h_{i-1}}\right]\]
+        \item[Boundary conditions:]
+              \begin{itemize}
+                  \item Natural: $z_0=z_n=0$ ($s''(a)=s''(b)=0$)
+                  \item Clamped: $s'(a), s'(b)$ specified
+                  \item Not-a-knot: $s'''$ continuous at $x_1,x_{n-1}$
+                  \item Periodic: $s(a)=s(b)$, $s'(a)=s'(b)$, $s''(a)=s''(b)$
+              \end{itemize}
+        \item[Variational property:] Natural cubic spline minimizes $\int_a^b [g''(x)]^2 dx$ among all $g \in C^2[a,b]$ interpolating the data
+        \item[Optimality:] Cubic splines achieve optimal approximation order $O(h^4)$ for $C^4$ functions
+    \end{description}
+
+    \subsection*{B-splines}
+    \begin{description}
+        \item[Basis:] $\{B_{i,k+1}\}$ forms basis for spline space $\mathcal{S}_k$ of degree $k$ splines
+        \item[Support:] $B_{i,k+1}$ has support on $[t_i,t_{i+k+1}]$ where $\Delta$ is extended knot sequence
+        \item[Properties:] Partition of unity: $\sum_i B_{i,k+1}(x) = 1$; Non-negativity: $B_{i,k+1}(x) \geq 0$; Local support
+        \item[Cox-de Boor recursion:] $B_{i,1}(x) = \begin{cases} 1 & \text{if } t_i \leq x < t_{i+1} \\ 0 & \text{otherwise} \end{cases}$
+              \[B_{i,k+1}(x) = \frac{x-t_i}{t_{i+k}-t_i}B_{i,k}(x) + \frac{t_{i+k+1}-x}{t_{i+k+1}-t_{i+1}}B_{i+1,k}(x)\]
+        \item[Representation:] Any spline $s(x) = \sum_i c_i B_{i,k+1}(x)$ with control points $c_i$
+        \item[Knot insertion:] Adding knots refines spline without changing its shape, enabling adaptive approximation
+    \end{description}
+
+
+    \section*{Orthogonal Polynomials \& Fourier}
+    \subsection*{Orthogonal Polynomials}
+    \begin{description}
+        \item[Inner product:] $(f,g)_w = \int_a^b f(x)g(x)w(x)dx$ with weight $w(x) > 0$
+        \item[Gram-Schmidt:] Orthogonalize $\{1,x,x^2,\ldots\}$ to get $\{p_0,p_1,p_2,\ldots\}$
+        \item[Three-term recurrence:] $p_{k+1}(x) = (a_k x + b_k)p_k(x) - c_k p_{k-1}(x)$
+        \item[Chebyshev polynomials:] $T_k(x) = \cos(k\arccos x)$, $w(x) = 1/\sqrt{1-x^2}$, $[-1,1]$. $T_{k+1} = 2xT_k - T_{k-1}$, $|T_k(x)| \leq 1$
+        \item[Legendre polynomials:] $w(x) = 1$ on $[-1,1]$. $(2k+1)P_{k+1} = (2k+1)xP_k - kP_{k-1}$
+        \item[Zeros property:] Orthogonal polynomial $p_n$ has $n$ simple real zeros in $(a,b)$
+    \end{description}
+
+    \subsection*{Fourier Series}
+    \begin{description}
+        \item[Complex form:] $f(x) = \sum_{n=-\infty}^{\infty} c_n e^{in\pi x/L}$, $c_n = \frac{1}{2L}\int_{-L}^L f(x)e^{-in\pi x/L}dx$
+        \item[Real form:] $f(x) = \frac{a_0}{2} + \sum_{n=1}^{\infty}[a_n\cos(n\pi x/L) + b_n\sin(n\pi x/L)]$
+        \item[Parseval's theorem:] $\frac{1}{2L}\int_{-L}^L |f(x)|^2dx = \sum_{n=-\infty}^{\infty}|c_n|^2 = \frac{|a_0|^2}{2} + \frac{1}{2}\sum_{n=1}^{\infty}(|a_n|^2 + |b_n|^2)$
+        \item[Gibbs phenomenon:] Fourier series exhibits ~9\% overshoot near discontinuities
+        \item[Convergence:] Pointwise convergence if $f$ piecewise smooth; uniform convergence if $f$ continuous and periodic
+    \end{description}
+
+    \section*{Numerical Differentiation}
+    \begin{description}
+        \item[Forward difference:] $f'(x) \approx \frac{f(x+h)-f(x)}{h}$ (error $O(h)$)
+        \item[Backward difference:] $f'(x) \approx \frac{f(x)-f(x-h)}{h}$
+        \item[Central difference:] $f'(x) \approx \frac{f(x+h)-f(x-h)}{2h}$ (error $O(h^2)$)
+        \item[Second derivative:] $f''(x) \approx \frac{f(x+h)-2f(x)+f(x-h)}{h^2}$ (error $O(h^2)$)
+        \item[Optimal step size:] Balance truncation $\propto h^p$ and rounding $\propto h^{-1}$: $h \approx \ep^{1/(p+1)}$
+    \end{description}
+
+    % --- Column 3 ---
+    \section*{Numerical Integration}
+    \subsection*{Newton-Cotes}
+    \begin{description}
+        \item[\textbf{Trapezoidal:}] $T(a,b) = \frac{b-a}{2}[f(a)+f(b)]$. Error: $I-T = -\frac{(b-a)^3}{12}f''(\xi)$. Composite: error $-\frac{(b-a)h^2}{12}f''(\xi)$
+        \item[\textbf{Simpson's:}]
+              \[S(a,b) = \frac{b-a}{6}[f(a) + 4f(c) + f(b)], \quad c=\frac{a+b}{2}.\]
+              Error: $-\frac{(b-a)^5}{2880}f^{(4)}(\xi)$
+        \item[\textbf{Composite Simpson:}]
+              \[\int_a^b f(x)\,dx \approx \frac{h}{3}\left[f(x_0) + 4\sum_{j	ext{ odd}}f(x_j) + 2\sum_{j	ext{ even}}f(x_j) + f(x_n)\right].\]
+              Error: $-\frac{(b-a)h^4}{180}f^{(4)}(\xi)$
+    \end{description}
+
+    \subsection*{Richardson \& Romberg}
+    \begin{description}
+        \item[\textbf{Richardson extrapolation:}] If $Q(h) = I + \alpha_1 h + \alpha_2 h^2 + \ldots$, then $	ilde{Q}(h) = \frac{2Q(h/2) - Q(h)}{2-1}$ eliminates $h$ term
+        \item[\textbf{Romberg integration:}] Recursive Richardson on trapezoidal rule. $\mathcal{A}_{k,j} = \frac{4^j \mathcal{A}_{k,j-1} - \mathcal{A}_{k-1,j-1}}{4^j - 1}$
+        \item[\textbf{Accuracy:}] $\mathcal{A}_{k,k} = I + O(h_k^{2(k+1)})$ with super-geometric convergence
+    \end{description}
+
+    \subsection*{Gaussian Quadrature}
+    \begin{description}
+        \item[\textbf{Principle:}] Choose both nodes $x_i$ and weights $\omega_i$ optimally. $Q_n(f) = \sum_{i=1}^n \omega_i f(x_i)$ exact for polynomials of degree $\leq 2n-1$
+        \item[\textbf{Gauss-Legendre:}] Nodes are zeros of Legendre polynomial $P_n(x)$ on $[-1,1]$
+        \item[\textbf{Gauss-Chebyshev:}] Nodes are zeros of $T_n(x)$, weight $w(x) = 1/\sqrt{1-x^2}$, $\omega_i = \pi/n$
+        \item[\textbf{Error:}] $\frac{f^{(2n)}(\xi)}{(2n)!}\int_a^b w(x)\omega_n(x)^2 dx$ where $\omega_n(x) = \prod_{i=1}^n(x-x_i)$
+    \end{description}
+
+    \subsection*{Adaptive \& Gauss}
+    \begin{description}
+        \item[\textbf{Adaptive Simpson:}] Apply Simpson on $[a,b]$ and halves $[a,c],[c,b]$. Error estimate: $\frac{S_2-S_1}{15}$. If $|S_2-S_1|$ below tolerance, accept $S_2$
+        \item[\textbf{Gauss:}] Choose nodes $x_i$ as zeros of orthogonal polynomial $p_n$ w.r.t. weight $w$. $Q_{w,n}(f) = \sum_{i=1}^n \omega_i f(x_i)$ has exactness degree $2n-1$. Error: $\frac{f^{(2n)}(\xi)}{(2n)!}\int_a^b w(x)\omega_n(x)^2 dx$
+    \end{description}
+    \section*{ODEs}
+    \subsection*{IVPs \& One-step Methods}
+    \begin{description}
+        \item[\textbf{IVP:}] $y'(t)=f(t,y(t))$, $y(t_0)=y_0$. If $f$ continuous and Lipschitz in $y$, unique solution exists
+        \item[\textbf{Euler:}] $y_{n+1} = y_n + hf(t_n,y_n)$. Local error $O(h^2)$, global $O(h)$. Stable for $h|\lambda| \leq 2$
+        \item[\textbf{Heun (RK2):}] $k_1 = f(t_n,y_n)$; $k_2 = f(t_n+h,y_n+hk_1)$; $y_{n+1} = y_n + \frac{h}{2}(k_1+k_2)$. Order 2
+        \item[\textbf{RK4:}] $k_1 = f(t_n,y_n)$; $k_2 = f(t_n+\frac{h}{2},y_n+\frac{h}{2}k_1)$; $k_3 = f(t_n+\frac{h}{2},y_n+\frac{h}{2}k_2)$; $k_4 = f(t_n+h,y_n+hk_3)$; $y_{n+1} = y_n + \frac{h}{6}(k_1+2k_2+2k_3+k_4)$. Local $O(h^5)$, global $O(h^4)$
+        \item[\textbf{Implicit Euler:}] $y_{n+1} = y_n + hf(t_{n+1},y_{n+1})$. A-stable, order 1
+    \end{description}
+
+    \subsection*{Linear Multistep}
+    \begin{description}
+        \item[\textbf{General:}] $\sum_{j=0}^k \alpha_j y_{n+j} = h\sum_{j=0}^k \beta_j f_{n+j}$ (Explicit if $\beta_k=0$, implicit otherwise).
+        \item[\textbf{Adams-Bashforth:}] $y_{n+1} = y_n + h\sum_{j=0}^{k-1} \gamma_j f_{n-j}$
+              \begin{itemize}
+                  \item AB1: $y_{n+1} = y_n + hf_n$ (Euler)
+                  \item AB2: $y_{n+1} = y_n + h[\frac{3}{2}f_n - \frac{1}{2}f_{n-1}]$
+                  \item AB3: $y_{n+1} = y_n + h[\frac{23}{12}f_n - \frac{16}{12}f_{n-1} + \frac{5}{12}f_{n-2}]$
+              \end{itemize}
+        \item[\textbf{Adams-Moulton:}] $y_{n+1} = y_n + h\sum_{j=0}^k \gamma_j^* f_{n+1-j}$
+              \begin{itemize}
+                  \item AM1: $y_{n+1} = y_n + hf_{n+1}$ (Backward Euler)
+                  \item AM2: $y_{n+1} = y_n + \frac{h}{2}(f_{n+1} + f_n)$ (Trapezoidal, A-stable)
+                  \item AM3: $y_{n+1} = y_n + \frac{h}{12}(5f_{n+1} + 8f_n - f_{n-1})$
+              \end{itemize}
+        \item[\textbf{Method of Order $q$:}] Local truncation error $\tau_{n+1} = C_q h^{q+1} y^{(q+1)}(\xi) + O(h^{q+2})$ where
+              \[C_q = \frac{1}{q!}\left(\sum_{j=0}^k \alpha_j j^q - q \sum_{j=0}^k \beta_j j^{q-1}\right)\]
+              If $C_0 = C_1 = \cdots = C_{q-1} = 0$ and $C_q \neq 0$, method has order $q$.
+        \item[\textbf{Zero stability:}] If roots of char. poly $\rho(z) = \sum_{j=0}^k \alpha_j z^j = 0$ satisfy $|z_j| \leq 1$ and roots on unit circle have multiplicity 1 (i.e., $\rho'(z_j) \neq 0$ for $|z_j|=1$), method is zero stable
+        \item[\textbf{Convergence:}] Zero stability + consistency $\Rightarrow$ convergence (Dahlquist equivalence theorem)
+        \item[\textbf{A-stability:}] Method stable for all $h\lambda$ with $\Re(\lambda) \leq 0$. AM2 (trapezoidal) is A-stable
+    \end{description}
+
+    % --- Column 4 ---
+    \section*{Optimization (Brief)}
+    \begin{description}
+        \item[\textbf{Gradient:}] $\nabla f(x)$ gives steepest ascent direction
+        \item[\textbf{Hessian:}] $H(x)$ contains second derivatives
+        \item[\textbf{Steepest descent:}] $x_{k+1} = x_k - \alpha_k \nabla f(x_k)$ with line search for $\alpha_k$
+        \item[\textbf{Newton:}] Solve $H(x_k)p_k = -\nabla f(x_k)$, set $x_{k+1} = x_k + p_k$. Requires positive definite $H$
+    \end{description}
+
+    \section*{Error Analysis \& Stability}
+    \begin{description}
+        \item[\textbf{Error sources:}] Modelling, discretization (truncation), rounding
+        \item[\textbf{Floating point:}] $\text{fl}(a \circ \mathbf{b}) = (a \circ \mathbf{b})(1+\delta)$, $|\delta| \leq \varepsilon_{\text{mach}}$
+        \item[\textbf{Absolute vs relative:}] Absolute: $|\tilde{x}-x|$, Relative: $\frac{|\tilde{x}-x|}{|x|}$
+        \item[\textbf{Algorithm stability:}] Small perturbations $\Rightarrow$ small changes in result
+        \item[\textbf{Conditioning vs stability:}] Conditioning = problem sensitivity to data; Stability = algorithm sensitivity
+    \end{description}
+\end{multicols*}
+
+
+\end{document}

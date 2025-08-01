@@ -1,0 +1,91 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{../../macros/trymtex}
+
+\begin{document}
+
+\section{Exam S2019}
+
+\subsection{Problem 6: Interpolatory Quadrature}
+
+\begin{enumerate}[label=\textbf{\arabic*.}, leftmargin=*, itemsep=1em]
+    \item
+    \begin{enumerate}
+        \item \textbf{Setup}
+        \[
+        I[f] = \int_{-1}^{1} f(x)\, w(x)\, dx, \qquad
+        Q_n[f] = \sum_{j=0}^{n} \alpha_j\, f(x_j),
+        \]
+        where
+        \begin{itemize}
+            \item \textbf{Nodes:} \(x_0, \dots, x_n \in [-1,1]\) are pairwise distinct,
+            \item \textbf{Weight:} \(w : [-1,1] \to [0, \infty)\) is integrable.
+        \end{itemize}
+
+        \item \textbf{Lagrange Cardinal Polynomials}
+        \[
+        \ell_j(x) = \prod_{\substack{k=0 \\ k \neq j}}^{n} \frac{x - x_k}{x_j - x_k},
+        \qquad
+        \ell_j(x_k) = \delta_{jk}, \qquad j = 0, \dots, n.
+        \]
+        The family \(\{\ell_j\}_{j=0}^{n}\) forms a basis for the space \(\mathbb{P}_n\) of polynomials of degree at most \(n\).
+        \begin{itemize}
+            \item \emph{Tip:} Memorise the Kronecker property \(\ell_j(x_k) = \delta_{jk}\); it simplifies sums immediately.
+        \end{itemize}
+
+        \item \textbf{Determining the Weights (Integrate-the-Basis Trick)}
+        \begin{itemize}
+            \item Exactness on each \(\ell_i\) requires
+            \[
+            Q_n[\ell_i] = I[\ell_i], \qquad i = 0, \dots, n.
+            \]
+            Compute:
+            \begin{align*}
+            Q_n[\ell_i]
+                &= \sum_{j=0}^{n} \alpha_j\, \ell_i(x_j)
+                 = \sum_{j=0}^{n} \alpha_j\, \delta_{ij}
+                 = \alpha_i,  \\
+            I[\ell_i]
+                &= \int_{-1}^{1} \ell_i(x)\, w(x)\, dx.
+            \end{align*}
+            Thus,
+            \[
+            \boxed{
+            \alpha_i = \int_{-1}^{1} \ell_i(x)\, w(x)\, dx,
+            \quad i = 0, \dots, n.
+            }
+            \]
+            \item \emph{Tip:} No linear systems! Just integrate the cardinal functions.
+        \end{itemize}
+
+        \item \textbf{Verifying Exactness for All \(p \in \mathbb{P}_n\)}
+        \begin{itemize}
+            \item Let \(p \in \mathbb{P}_n\). Interpolate \(p\) in the \(\ell\)-basis:
+            \[
+            p(x) = \sum_{k=0}^{n} p(x_k)\, \ell_k(x).
+            \]
+            Integrate with the weight \(w\):
+            \begin{align*}
+            I[p]
+                &= \int_{-1}^{1} p(x)\, w(x)\, dx
+                 = \int_{-1}^{1} \sum_{k=0}^{n} p(x_k)\, \ell_k(x)\, w(x)\, dx \\
+                &= \sum_{k=0}^{n} p(x_k) \int_{-1}^{1} \ell_k(x)\, w(x)\, dx
+                 = \sum_{k=0}^{n} p(x_k)\, \alpha_k
+                 = Q_n[p].
+            \end{align*}
+            Therefore, \(Q_n[p] = I[p]\) for every polynomial \(p\) of degree at most \(n\).
+        \end{itemize}
+
+        \item \textbf{Conclusion}
+        \begin{itemize}
+            \item With
+            \[
+            \alpha_i = \int_{-1}^{1} \ell_i(x)\, w(x)\, dx,
+            \quad i = 0, \dots, n,
+            \]
+            the interpolatory \((n+1)\)-point rule \(Q_n\) achieves degree of exactness \(n\), \emph{regardless of how the nodes are chosen}.
+            \item \emph{Final tip:} The same construction appears in Gaussian quadrature: if you choose the nodes as the zeros of the orthogonal polynomial of degree \(n+1\), the degree of exactness jumps to \(2n+1\). Remember this connection—it is an easy extra mark if asked ``why Gauss nodes are special''.
+        \end{itemize}
+    \end{enumerate}
+\end{enumerate}
+
+\end{document}

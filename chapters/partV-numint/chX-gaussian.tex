@@ -1,0 +1,252 @@
+\chapter{Gaussian Quadrature}
+\label{ch:gaussian-quadrature}
+
+\section{Background: Orthogonal Polynomials}
+
+\subsection{Jacobi Polynomials}
+
+We considered the orthogonal Jacobi polynomials on $[-1,1]$, where we choose for some $\alpha, \beta > -1$ the weight:
+\[w(x) = (1-x)^{\alpha}(1+x)^{\beta}\]
+
+and construct orthogonal polynomials with respect to $(\cdot, \cdot)_w$. We even obtained a three-term recursion.
+
+\textbf{Special Cases:}
+\begin{itemize}
+    \item $\alpha = \beta = -\frac{1}{2}$ yields Chebyshev polynomials
+    \item $\alpha = \beta = 0$ yields Legendre polynomials
+\end{itemize}
+
+\subsection{Chebyshev Polynomials}
+
+On $[-1,1]$ we use $w(x) = \frac{1}{\sqrt{1-x^2}}$ to obtain the Chebyshev polynomials:
+\[T_k(x) = \cos(k \arccos(x)) = \cos(k\theta), \quad x = \cos \theta, \quad k \in \mathbb{N}\]
+
+with:
+\begin{itemize}
+    \item 3-term recursion: Starting with $T_0(x) = 1$, $T_1(x) = x$ we get:
+          \[T_{k+1}(x) = 2xT_k(x) - T_{k-1}(x), \quad k > 1\]
+
+    \item $T_k(x) = 2^{k-1}x^k + \ldots$ lower order terms $\Rightarrow 2^{1-k}T_k$ is monic
+
+    \item $(T_k, T_l)_w = \begin{cases}
+                  0             & \text{for } k \neq l  \\
+                  \frac{\pi}{2} & \text{for } k = l > 0 \\
+                  \pi           & \text{for } k = l = 0
+              \end{cases}$
+
+    \item $|T_k(x)| \leq 1$ for $x \in [-1,1]$ and hence $\|T_k\|_{\infty} = \max_{-1 \leq x \leq 1} |T_k(x)| = 1$
+\end{itemize}
+
+\section{Real Zeros of Orthogonal Functions}
+
+\begin{theorem}{Real Zeros of Orthogonal Functions}{real-zeros-orthogonal}
+    Let $f \in C[a,b]$, $f \not\equiv 0$ and $n \in \mathbb{N}$ be given. Assume that:
+    \[(f, p)_w = 0 \text{ for all } p \in \mathbb{P}_{n-1}\]
+    (especially we could take $f = p_n$).
+
+    Then $f$ changes sign at least $n$ times on $[a,b]$, so we have $n$ real zeros.
+\end{theorem}
+
+\begin{proof}
+    Suppose $f$ has fewer than $n$ sign changes on $[a,b]$. Let $x_1, \ldots, x_k$ be the points where $f$ changes sign, with $k < n$.
+
+    Consider the polynomial $q(x) = \prod_{i=1}^k (x - x_i) \in \mathbb{P}_k \subset \mathbb{P}_{n-1}$.
+
+    Since $f$ and $q$ have the same sign changes, the product $f(x)q(x)$ does not change sign on $[a,b]$.
+
+    Therefore: $(f, q)_w = \int_a^b f(x)q(x)w(x) \, dx \neq 0$.
+
+    But this contradicts our assumption that $(f, p)_w = 0$ for all $p \in \mathbb{P}_{n-1}$, since $q \in \mathbb{P}_{n-1}$.
+
+    Hence $f$ must have at least $n$ sign changes, and therefore at least $n$ real zeros.
+\end{proof}
+
+\section{Optimal Interpolation Nodes}
+
+\subsection{Polynomial Interpolation Review}
+
+Remember: Interpolate $f \in C^{(n+1)}([-1,1])$ with $p_n \in \mathbb{P}_n$ means to satisfy:
+\[p_n(x_i) = f(x_i), \quad i = 0, \ldots, n\]
+for some given nodes $x_i$.
+
+We obtained the error bound for some $\xi = \xi(x) \in [-1,1]$:
+\[f(x) - p_n(x) = \frac{1}{(n+1)!} f^{(n+1)}(\xi) \omega(x), \quad \omega(x) = \prod_{i=0}^n (x - x_i)\]
+
+where $f$ is given and we have not much control over $\xi$.
+
+But we can try to get $\omega(x)$ "small" when we are allowed to choose the interpolation nodes $x_i$.
+
+We want to use known properties:
+\begin{enumerate}
+    \item $\omega(x) \in \mathbb{P}_{n+1}$
+    \item $\omega(x)$ is monic
+    \item $\omega(x)$ has $n+1$ real zeros, namely the interpolation nodes $x_0, \ldots, x_n$
+\end{enumerate}
+
+\subsection{Choose Chebyshev Polynomials!}
+
+If we set $\omega(x) = 2^{-n}T_{n+1}(x)$ $\Rightarrow$ 1 \& 2 are fulfilled.
+
+So let's choose the nodes $x_k$ as the zeros of $T_{n+1}$, i.e., $T_{n+1}(x_k) = 0$.
+
+\textbf{Zeros of $T_{n+1}$:} We have $T_{n+1}(x) = \cos((n+1)\theta) = 0 \Rightarrow (n+1)\theta = \frac{\pi}{2} + k\pi$ for any $k \in \mathbb{Z}$.
+
+We obtain the zeros for $k = 0, \ldots, n$:
+\[\theta_k = \frac{2k+1}{2(n+1)} \pi \quad \text{that is for } x_k = \cos\left(\frac{2k+1}{2(n+1)} \pi\right) \in [-1,1]\]
+
+Since we know $\|T_k\|_{\infty} = 1$ we get $\|\omega\|_{\infty} = 2^{-n}$.
+
+Can we do better in $\|\cdot\|_{\infty}$?
+
+\begin{theorem}{Optimal Bound on $\omega(x)$}{optimal-omega-bound}
+    Let $\omega(x) = \prod_{i=0}^n (x - x_i) \in \mathbb{P}_n$.
+
+    Among all possible choices of distinct nodes $x_0, \ldots, x_n \in [-1,1]$ the resulting:
+    \[\|\omega\|_{\infty} = \max_{-1 \leq x \leq 1} |\omega(x)|\]
+    is minimized if $\omega(x) = 2^{-n}T_{n+1}(x)$.
+\end{theorem}
+
+\begin{proof}
+    Suppose there exists another choice of nodes $y_0, \ldots, y_n$ such that:
+    \[\tilde{\omega}(x) = \prod_{i=0}^n (x - y_i)\]
+    satisfies $\|\tilde{\omega}\|_{\infty} < 2^{-n}$.
+
+    Consider $p(x) = 2^{-n}T_{n+1}(x) - \tilde{\omega}(x)$.
+
+    Since both polynomials are monic of degree $n+1$, we have $p \in \mathbb{P}_n$.
+
+    Now, $T_{n+1}(x)$ has $n+1$ extremal points where $|T_{n+1}(x)| = 1$, alternating between $+1$ and $-1$.
+
+    At these points: $|2^{-n}T_{n+1}(x)| = 2^{-n} > \|\tilde{\omega}\|_{\infty} \geq |\tilde{\omega}(x)|$.
+
+    Therefore, $p(x)$ alternates sign at least $n+1$ times, which means $p$ has at least $n$ zeros.
+
+    But $p \in \mathbb{P}_n$, so $p$ can have at most $n$ zeros unless $p \equiv 0$.
+
+    Since $p$ has exactly $n$ zeros and alternates sign $n+1$ times, we must have $p \equiv 0$.
+
+    This contradicts our assumption that $\|\tilde{\omega}\|_{\infty} < 2^{-n}$.
+\end{proof}
+
+\section{Gaussian Integration}
+
+Consider the problem:
+\[I_w(f) = \int_a^b w(x)f(x) \, dx\]
+
+We want to find a quadrature formula:
+\[Q_w(f) = \sum_{i=1}^n \alpha_i f(x_i)\]
+
+For some weights $\alpha_i$, we still have to determine.
+
+Remember: We call the highest polynomial degree $m$ such that $I_w(p) = Q_w(p)$ for all $p \in \mathbb{P}_m$ its precision (degree).
+
+For distinct $x_1, \ldots, x_n$ we require the $Q_w(f)$ to have precision $n-1$.
+
+\subsection{Idea: Reuse Lagrange Polynomials}
+
+We know that polynomials interpolate themselves: For any $p \in \mathbb{P}_{n-1}$ we get:
+\[p(x) = \sum_{i=1}^n p(x_i) \ell_i(x), \quad \ell_i(x) = \prod_{\substack{j=1\\j \neq i}}^n \frac{x - x_j}{x_i - x_j}, \quad i = 1, \ldots, n\]
+
+so by linearity of integration:
+\[I_w(p) = \int_a^b w(x) \sum_{i=1}^n p(x_i) \ell_i(x) \, dx = \sum_{i=1}^n \alpha_i p(x_i)\]
+
+where:
+\[\alpha_i = \int_a^b w(x) \ell_i(x) \, dx\]
+
+$\Rightarrow Q_w$ is exact for all $p \in \mathbb{P}_{n-1}$ if we choose $\alpha_i$ this way!
+
+$\Rightarrow$ precision $n-1$ accomplished
+
+Since we can still choose $x_1, \ldots, x_n$ – can we increase the precision?
+
+\section{Exactness of Gaussian Quadrature}
+
+\begin{theorem}{Gaussian Quadrature Exactness}{gaussian-exactness}
+    Let $p_n$ be the orthogonal polynomial w.r.t. $(\cdot, \cdot)_w$. Let $x_1, \ldots, x_n$ be the distinct zeros of $p_n$ (in $[a,b]$!).
+
+    Then the quadrature formula:
+    \[I_w(f) \approx Q_w(f) = \sum_{i=1}^n \alpha_i f(x_i)\]
+
+    where:
+    \[\alpha_i = \int_a^b w(x) \ell_i(x) \, dx\]
+
+    has precision degree $2n-1$.
+\end{theorem}
+
+\begin{proof}
+    We already know that the formula is exact for all $p \in \mathbb{P}_{n-1}$.
+
+    Now let $q \in \mathbb{P}_{2n-1}$. We can write:
+    \[q(x) = p_n(x) s(x) + r(x)\]
+
+    where $s, r \in \mathbb{P}_{n-1}$ (polynomial division).
+
+    Then:
+    \begin{align}
+        I_w(q) & = \int_a^b w(x) [p_n(x) s(x) + r(x)] \, dx                                                           \\
+               & = \int_a^b w(x) p_n(x) s(x) \, dx + \int_a^b w(x) r(x) \, dx                                         \\
+               & = (p_n, s)_w + I_w(r)                                                                                \\
+               & = 0 + Q_w(r) \quad \text{(since } s \in \mathbb{P}_{n-1} \text{ and } r \in \mathbb{P}_{n-1}\text{)} \\
+               & = Q_w(r)
+    \end{align}
+
+    Also:
+    \begin{align}
+        Q_w(q) & = \sum_{i=1}^n \alpha_i q(x_i)                                                              \\
+               & = \sum_{i=1}^n \alpha_i [p_n(x_i) s(x_i) + r(x_i)]                                          \\
+               & = \sum_{i=1}^n \alpha_i [0 \cdot s(x_i) + r(x_i)] \quad \text{(since } p_n(x_i) = 0\text{)} \\
+               & = \sum_{i=1}^n \alpha_i r(x_i)                                                              \\
+               & = Q_w(r)
+    \end{align}
+
+    Therefore: $I_w(q) = Q_w(q)$ for all $q \in \mathbb{P}_{2n-1}$.
+\end{proof}
+
+\section{Examples of Gaussian Quadrature}
+
+\subsection{Simple Example}
+
+Consider the Legendre polynomial $p_1(x) = x$. Then $w \equiv 1$ on $[-1,1]$ and we get $x_1 = 0$ and:
+\[\alpha_1 = \int_{-1}^1 w(x) \ell_1(x) \, dx = \int_{-1}^1 1 \, dx = 2\]
+
+This is the midpoint rule.
+
+\subsection{Second Example}
+
+For $n = 3$ and $w \equiv 1$ we have the Legendre polynomial $p_3(x) = x^3 - \frac{3}{5}x$ on $[-1,1]$.
+
+The zeros are $x_1 = -\sqrt{\frac{3}{5}}$, $x_2 = 0$, $x_3 = \sqrt{\frac{3}{5}}$.
+
+The corresponding weights are $\alpha_1 = \alpha_3 = \frac{5}{9}$ and $\alpha_2 = \frac{8}{9}$.
+
+\section{Gaussian Quadrature Error Bound}
+
+If we write:
+\[I_w(f) = Q_{w,n}(f) + E\]
+
+remember that we had precision $2n-1$.
+
+\begin{theorem}{Gaussian Quadrature Error}{gaussian-error}
+    Then the error $E$ is of the form:
+    \[E = \frac{f^{(2n)}(\xi)}{(2n)!} \int_a^b w(x) \omega^2(x) \, dx, \quad \omega(x) = \prod_{i=1}^n (x - x_i)\]
+
+    for $f \in C^{(2n)}([a,b])$ and some $\xi \in [a,b]$.
+\end{theorem}
+
+\begin{proof}
+    Let $H_{2n-1}(x)$ be the Hermite interpolating polynomial of degree $2n-1$ that satisfies:
+    \[H_{2n-1}(x_i) = f(x_i), \quad H'_{2n-1}(x_i) = f'(x_i), \quad i = 1, \ldots, n\]
+
+    The error in Hermite interpolation is:
+    \[f(x) - H_{2n-1}(x) = \frac{f^{(2n)}(\xi(x))}{(2n)!} \omega^2(x)\]
+
+    Since $Q_{w,n}$ is exact for polynomials of degree $2n-1$:
+    \[I_w(f) - Q_{w,n}(f) = I_w(f - H_{2n-1}) = \int_a^b w(x) \frac{f^{(2n)}(\xi(x))}{(2n)!} \omega^2(x) \, dx\]
+
+    By the integral mean value theorem:
+    \[= \frac{f^{(2n)}(\xi)}{(2n)!} \int_a^b w(x) \omega^2(x) \, dx\]
+
+    for some $\xi \in [a,b]$.
+\end{proof}
+
+This completes our comprehensive treatment of numerical integration, from basic Newton-Cotes formulas through Richardson extrapolation to the advanced Gaussian quadrature methods.

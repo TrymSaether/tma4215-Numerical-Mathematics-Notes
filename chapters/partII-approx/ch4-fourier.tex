@@ -1,0 +1,257 @@
+\chapter{Fourier Analysis}
+\label{ch:fourier}
+
+\section{Fourier Series}
+\label{sec:fourier-series}
+
+A Fourier series represents any reasonably well--behaved \(2L\)--periodic function \(f(x)\) as an infinite linear combination of sines and cosines.
+
+\subsection{Orthogonal Basis of Sines and Cosines}
+The key idea is that the set
+\begin{equation}
+    \mathcal{S} := \left\{1,\cos\tfrac{\pi x}{L},\sin\tfrac{\pi x}{L},\cos\tfrac{2\pi x}{L},\sin\tfrac{2\pi x}{L},\dots \right\}
+\end{equation}
+forms an orthogonal basis on the interval \([-L,L]\).
+
+Because sines and cosines of different frequencies are orthogonal, cross--terms disappear when computing the coefficients:
+
+\begin{proposition}{Orthogonality of Sines and Cosines}{orthogonality}
+    For integers \( m, n \geq 0 \) on the interval \([-L, L]\), the following orthogonality relations hold:
+    \begin{align*}
+        \int_{-L}^{L} \cos\left(\tfrac{m\pi x}{L}\right) \cos\left(\tfrac{n\pi x}{L}\right) \, dx
+         & =
+        \begin{cases}
+            0,  & m \neq n,     \\
+            L,  & m = n \neq 0, \\
+            2L, & m = n = 0,
+        \end{cases}                 \\
+        \int_{-L}^{L} \sin\left(\tfrac{m\pi x}{L}\right) \sin\left(\tfrac{n\pi x}{L}\right) \, dx
+         & =
+        \begin{cases}
+            0, & m \neq n,     \\
+            L, & m = n \neq 0,
+        \end{cases}                  \\
+        \int_{-L}^{L} \cos\left(\tfrac{m\pi x}{L}\right) \sin\left(\tfrac{n\pi x}{L}\right) \, dx
+         & = 0 \qquad \text{for all } m, n.
+    \end{align*}
+\end{proposition}
+
+These relations show that the set of functions \( \{1, \cos(\frac{n\pi x}{L}), \sin(\frac{n\pi x}{L}) \} \) forms an orthogonal basis for \( L^2([-L, L]) \).
+
+\subsection{Fourier Series Definition}
+If we project \(f\) onto these basis functions, we obtain its Fourier expansion. The coefficients are computed by taking the inner product of \(f\) with each basis function, exploiting their orthogonality.
+
+\begin{definition}{Fourier Series}{fourier-series}
+    Let \(f\) be a \(2L\)--periodic function integrable on \([-L,L]\).  Its Fourier series is
+    \begin{equation}
+        f(x) = \frac{a_0}{2} +\sum_{n=1}^{\infty} \left(a_n\cos\tfrac{n\pi x}{L} +b_n\sin \tfrac{n\pi x}{L}\right)
+    \end{equation}
+
+    where the coefficients are the orthogonal projections
+    \begin{align*}
+        a_0 & =\frac{1}{L}\int_{-L}^{L}f(x)\, dx                      \\
+        a_n & =\frac{1}{L}\int_{-L}^{L}f(x)\cos\tfrac{n\pi x}{L}\, dx \\
+        b_n & =\frac{1}{L}\int_{-L}^{L}f(x)\sin\tfrac{n\pi x}{L}\, dx
+    \end{align*}
+\end{definition}
+
+Intuitively, each coefficient \(a_n\) (resp.\ \(b_n\)) measures how much of the cosine (resp.\ sine) wave of frequency \(n\pi/L\) is present in \(f\).
+
+The Fourier series can be understood geometrically as projecting the function \(f\) onto the orthogonal basis of trigonometric functions. Each coefficient represents the "component" of \(f\) in the direction of a particular basis function.
+
+\begin{figure}[htbp]
+    \centering
+    \includestandalone[width=0.48\textwidth]{figures/fourier-ortho-1}
+    \hfill
+    \includestandalone[width=0.44\textwidth]{figures/fourier-ortho-2}
+    \caption{
+        Left: Decomposition of a function \(f(x)\) into its trigonometric components.
+        Right: The orthogonal trigonometric basis functions on \([-L, L]\).
+    }
+    \label{fig:fourier-orthogonal-projection}
+\end{figure}
+
+The projection formula for coefficient \(a_n\) can be visualized as:
+\begin{equation}
+    a_n = \frac{\langle f, \cos(n\pi x/L) \rangle}{\|\cos(n\pi x/L)\|^2} = \frac{\int_{-L}^{L} f(x)\cos(n\pi x/L)\,dx}{\int_{-L}^{L} \cos^2(n\pi x/L)\,dx} = \frac{1}{L}\int_{-L}^{L} f(x)\cos(n\pi x/L)\,dx
+\end{equation}
+
+This geometric interpretation shows that Fourier analysis is fundamentally about finding the best approximation to \(f\) in the subspace spanned by trigonometric functions, where "best" means minimizing the \(L^2\) error over the interval \([-L,L]\).
+
+\begin{definition}{Complex Fourier Series}{complex-fourier}
+    The complex exponential form of the Fourier series is:
+    \begin{equation}
+        f(x) = \sum_{n=-\infty}^{\infty} c_n e^{i n \pi x / L}
+    \end{equation}
+    where the complex coefficients are:
+    \begin{equation}
+        c_n = \frac{1}{2L} \int_{-L}^{L} f(x) e^{-i n \pi x / L} \, dx
+    \end{equation}
+
+    The relationship between real and complex coefficients is:
+    \begin{align}
+        c_0    & = \frac{a_0}{2}                                        \\
+        c_n    & = \frac{a_n - i b_n}{2} \quad (n > 0)                  \\
+        c_{-n} & = \frac{a_n + i b_n}{2} = \overline{c_n} \quad (n > 0)
+    \end{align}
+\end{definition}
+
+\subsection{Properties of Fourier Series}
+The Fourier series possesses several important properties that mirror the structure of the underlying function space.
+\begin{property}{Properties of Fourier Series}{fourier-properties}
+    Let \( f(x) \) and \( g(x) \) be \( 2L \)-periodic functions with Fourier series, and let \( \alpha, \beta \) be constants. Then:
+    \begin{enumerate}[label=\textbf{\arabic*.}, leftmargin=*, noitemsep]
+        \item \textbf{Linearity:} The Fourier series is linear:
+              \[
+                  \mathcal{F}[\alpha f(x) + \beta g(x)] = \alpha \mathcal{F}[f(x)] + \beta \mathcal{F}[g(x)].
+              \]
+        \item \textbf{Differentiation:} If \( f \) is continuous and piecewise smooth, the Fourier series of \( f'(x) \) is obtained by term-wise differentiation:
+              \[
+                  f'(x) = \sum_{n=1}^{\infty} \left( -a_n \frac{n\pi}{L} \sin\left(\frac{n\pi x}{L}\right) + b_n \frac{n\pi}{L} \cos\left(\frac{n\pi x}{L}\right) \right),
+              \]
+              where \( a_n, b_n \) are the Fourier coefficients of \( f \).
+        \item \textbf{Integration:} The Fourier series of \( f(x) \) can be integrated term by term:
+              \[
+                  \int_{-L}^{x} f(t)\,dt = \frac{a_0}{2}(x + L) + \sum_{n=1}^{\infty} \left[ a_n \frac{L}{n\pi} \sin\left(\frac{n\pi x}{L}\right) - b_n \frac{L}{n\pi} \cos\left(\frac{n\pi x}{L}\right) + b_n \frac{L}{n\pi} \right],
+              \]
+              where the integration constant is chosen so that the result is \( 2L \)-periodic.
+    \end{enumerate}
+\end{property}
+
+\subsubsection{Parseval's Theorem}
+Parseval's theorem relates the \(L^2\) norm of a function to the sum of the squares of its Fourier coefficients, providing a powerful tool for analyzing the energy content of signals.
+\begin{theorem}{Parseval's Theorem}{parseval}
+    Let \( f \) be a \( 2L \)-periodic, square-integrable function on \([-L, L]\), with complex Fourier coefficients
+    \[
+        c_n = \frac{1}{2L} \int_{-L}^{L} f(x) e^{-i n \pi x / L} \, dx.
+    \]
+    Define the inner product and norm on \( \mathrm{L}^2([-L, L]) \) by
+    \[
+        \langle f, g \rangle = \int_{-L}^{L} f(x) \cdot \overline{g(x)} \, dx, \qquad \|f\|^2 = \langle f, f \rangle = \int_{-L}^{L} |f(x)|^2 \, dx.
+    \]
+    Then Parseval's theorem states:
+    \[
+        \|f\|^2 = \int_{-L}^{L} |f(x)|^2 \, dx = 2L \sum_{n=-\infty}^{\infty} |c_n|^2.
+    \]
+    This expresses the completeness and orthogonality of the exponential basis in \( L^2([-L, L]) \).
+\end{theorem}
+
+\begin{proof}
+    Let \( f(x) = \sum_{n=-\infty}^{\infty} c_n e^{i n \pi x / L} \) be the complex Fourier series of \( f \), converging in \( L^2([-L, L]) \).
+    The coefficients are given by
+    \[
+        c_n = \frac{1}{2L} \int_{-L}^{L} f(x) e^{-i n \pi x / L} \, dx.
+    \]
+    The exponential functions \( \{e^{i n \pi x / L}\}_{n \in \mathbb{Z}} \) form an orthogonal basis for \( L^2([-L, L]) \) with
+    \[
+        \int_{-L}^{L} e^{i n \pi x / L} \overline{e^{i m \pi x / L}} \, dx = \int_{-L}^{L} e^{i (n-m) \pi x / L} \, dx =
+        \begin{cases}
+            2L, & n = m,    \\
+            0,  & n \neq m.
+        \end{cases}
+    \]
+    Therefore,
+    \begin{align*}
+        \|f\|^2 & = \int_{-L}^{L} |f(x)|^2 \, dx                                                                                                                                 \\
+                & = \int_{-L}^{L} \left( \sum_{n=-\infty}^{\infty} c_n e^{i n \pi x / L} \right) \overline{ \left(\sum_{m=-\infty}^{\infty} c_m e^{i m \pi x / L} \right)} \, dx \\
+                & = \int_{-L}^{L} \sum_{n} \sum_{m} c_n \overline{c_m} e^{i (n-m) \pi x / L} \, dx                                                                               \\
+                & = \sum_{n} \sum_{m} c_n \overline{c_m} \int_{-L}^{L} e^{i (n-m) \pi x / L} \, dx                                                                               \\
+                & = \sum_{n} \sum_{m} c_n \overline{c_m} \cdot 2L \, \delta_{nm}                                                                                                 \\
+                & = 2L \sum_{n=-\infty}^{\infty} |c_n|^2.
+    \end{align*}
+    This completes the proof.
+\end{proof}
+
+\subsubsection{Gibbs Phenomenon}
+When approximating a function with discontinuities using Fourier series, the partial sums exhibit an overshoot near the discontinuities that does not disappear as more terms are added. This overshoot is approximately 9\% of the jump discontinuity and is known as the \textbf{Gibbs phenomenon}.
+
+\begin{figure}[H]
+    \centering
+    \includestandalone[width=0.8\textwidth]{figures/fourier-gibbs}
+    \caption{Gibbs phenomenon showing persistent overshoot near discontinuities}
+\end{figure}
+
+\subsubsection{Convergence of Fourier Series}
+A natural question is: \emph{When does the Fourier series of a function converge to the function itself?}
+Not every periodic function has a Fourier series that converges everywhere to the original function.
+The answer is provided by the \textbf{Dirichlet conditions}, which give sufficient (but not necessary) criteria for pointwise convergence of the Fourier series.
+
+\begin{theorem}{Dirichlet Conditions for Fourier Series Convergence}{dirichlet-conditions}
+    Let \( f \) be a \( 2L \)-periodic, piecewise smooth function on \(\mathbb{R}\). If the following conditions hold:
+    \begin{enumerate}
+        \item \( f \) is absolutely integrable over one period: \( \int_{-L}^{L} |f(x)|\,dx < \infty \).
+        \item \( f \) has only finitely many discontinuities (all of finite size) and finitely many extrema in any period.
+    \end{enumerate}
+    Then, at every point \( x \) where \( f \) is continuous, its Fourier series converges to \( f(x) \). At a point of discontinuity \( x_0 \), the Fourier series converges to the average of the right and left limits:
+    \begin{equation}
+        \lim_{N \to \infty} S_N(x_0) = \frac{f(x_0^+) + f(x_0^-)}{2}
+    \end{equation}
+    where \( S_N(x) \) is the \( N \)-th partial sum of the Fourier series, and \( f(x_0^+), f(x_0^-) \) are the right and left limits of \( f \) at \( x_0 \).
+\end{theorem}
+
+\begin{itemize}
+    \item Dirichlet conditions are sufficient (not necessary) for pointwise convergence.
+    \item At discontinuities, the series converges to the average of left and right limits.
+    \item Convergence is pointwise, not uniform; Gibbs phenomenon may appear near jumps.
+\end{itemize}
+
+\subsection{Examples of Fourier Series}
+\begin{example}{Square Wave}{square-wave}
+    Consider the square wave function defined on
+    \begin{equation}
+        f(x) = \begin{cases}
+            1  & \text{if } 0 < x < \pi   \\
+            -1 & \text{if } -\pi < x < 0  \\
+            0  & \text{if } x = 0, \pm\pi
+        \end{cases}
+    \end{equation}
+
+    Since the function is odd, all cosine terms vanish (\(a_n = 0\)), and we only have sine terms:
+    \begin{align}
+        b_n & = \frac{1}{\pi} \int_{-\pi}^{\pi} f(x) \sin(nx) \, dx    \\
+            & = \frac{2}{\pi} \int_{0}^{\pi} \sin(nx) \, dx            \\
+            & = \frac{2}{\pi} \left[-\frac{\cos(nx)}{n}\right]_0^{\pi} \\
+            & = \frac{2}{n\pi}(1 - \cos(n\pi))                         \\
+            & = \begin{cases}
+                    \frac{4}{n\pi} & \text{if } n \text{ is odd}  \\
+                    0              & \text{if } n \text{ is even}
+                \end{cases}
+    \end{align}
+
+    Therefore, the Fourier series is:
+    \begin{equation}
+        f(x) = \frac{4}{\pi} \sum_{n=1,3,5,\ldots} \frac{\sin(nx)}{n} = \frac{4}{\pi}\left(\sin x + \frac{\sin 3x}{3} + \frac{\sin 5x}{5} + \cdots\right)
+    \end{equation}
+\end{example}
+
+\begin{figure}[H]
+    \centering
+    \includestandalone[width=0.8\textwidth]{figures/fourier-square}
+    \caption{Fourier series approximation of a square wave showing convergence with increasing number of terms}
+\end{figure}
+
+\begin{example}{Sawtooth Wave}{sawtooth-wave}
+    Consider the sawtooth wave defined on \((-\pi, \pi)\):
+    \begin{equation}
+        f(x) = x \quad \text{for } x \in (-\pi, \pi)
+    \end{equation}
+
+    Since this function is odd, we have \(a_n = 0\) for all \(n\), and:
+    \begin{align}
+        b_n & = \frac{1}{\pi} \int_{-\pi}^{\pi} x \sin(nx) \, dx \\
+            & = \frac{2}{\pi} \int_{0}^{\pi} x \sin(nx) \, dx    \\
+            & = \frac{2(-1)^{n+1}}{n}
+    \end{align}
+
+    The Fourier series is:
+    \begin{equation}
+        f(x) = 2 \sum_{n=1}^{\infty} \frac{(-1)^{n+1}}{n} \sin(nx) = 2\left(\sin x - \frac{\sin 2x}{2} + \frac{\sin 3x}{3} - \cdots\right)
+    \end{equation}
+\end{example}
+
+\begin{figure}[H]
+    \centering
+    \includestandalone[width=0.8\textwidth]{figures/fourier-sawtooth}
+    \caption{Fourier series approximation of a sawtooth wave}
+    \label{fig:fourier-sawtooth}
+\end{figure}

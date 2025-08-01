@@ -1,0 +1,238 @@
+\chapter{Linear Optimization}
+\label{ch:linear-opt}
+
+\section*{Examples}
+
+\subsection*{Exam 2022}
+\paragraph{Problem 2}
+
+Let \(A \in \R^{n \times n}\) and \(b \in \R^n\) be given. We want to solve the optimization problem
+\begin{equation*}
+    \argmin_{\mathbf{x} \in \R^n} \frac{1}{2} \|A\mathbf{x} - \mathbf{b}\|_2^2.
+\end{equation*}
+\begin{lstlisting}[language=Python, numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=5pt]
+import numpy as np
+def sol(A, b, x, tau=1, max_iter=200):
+    (n, _) = A.shape
+    for _ in range(max_iter):
+        r = b - (A @ x)
+        for j in range(n):
+            x[j] = x[j] + tau * r[j]
+    return xs
+\end{lstlisting}
+\begin{enumerate}[label=(\alph*)]
+    \item
+          \begin{align*}
+              F(\mathbf{x}) & = \frac12 \|A \mathbf{x} - \mathbf{b}\|^2                                                                                                                 \\
+                            & = \frac12\left(A\mathbf{x} - \mathbf{b}\right)^\top \left(A\mathbf{x} - \mathbf{b}\right)                                                                 \\
+                            & = \frac12\left(\mathbf{x}^\top A^\top A \mathbf{x} - \mathbf{x}^\top A^\top \mathbf{b} - \mathbf{b}^\top A \mathbf{x} - \mathbf{b}^\top \mathbf{b}\right) \\
+                            & = \frac12\left(\mathbf{x}^\top A^\top A \mathbf{x} - 2\mathbf{b}^\top A \mathbf{x} - \mathbf{b}^\top \mathbf{b}\right)                                    \\
+          \end{align*}
+          \begin{itemize}
+              \item Gradient:
+                    \begin{align*}
+                        \nabla F (\mathbf{x}) & = \frac12 2  A^\top A \mathbf{x} - A^\top \mathbf{b} \\
+                                              & =  A^\top A \mathbf{x} - A^\top \mathbf{b}           \\
+                    \end{align*}
+              \item FONC:
+                    \begin{align*}
+                        \nabla F(\mathbf{x})                    & = \mathbf{0}                                   \\
+                        A^\top A \mathbf{x} - A^\top \mathbf{b} & = \mathbf{0}                                   \\
+                        A^\top A \mathbf{x}                     & = A^\top \mathbf{b}                            \\
+                        \mathbf{x}                              & = \left(A^\top A\right)^{-1} A^\top \mathbf{b}
+                    \end{align*}
+          \end{itemize}
+    \item The python code shows the Richardson iteration method for solving the linear system \(A\mathbf{x} = \mathbf{b}\) iteratively, where \(x\) is updated by adding a scaled residual \(r = b - A x\) at each step.
+          It does not converge towards the right solution, since \texttt{tau = 1} is not small enough to ensure convergence.
+          To reduce the code to a single line, we can use the following:
+          \begin{lstlisting}[language=Python, numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=5pt]
+        def sol(A, b, x, tau=1, max_iter=200):
+            for _ in range(max_iter):
+                x += tau * (b - A @ x)
+            return x
+    \end{lstlisting}
+    \item For this task let \(A \in \R^{n \times n}\) be of full rank.
+          Compare the method of using a gradient descent on the problem in a) to the
+          method in b). How are the two methods related?
+
+          Both methods aim to solve a linear system \(\tilde{A}\mathbf{x} = \tilde{\mathbf{b}}\). If we apply gradient descent to the problem in (a) we get the iteration
+          \[
+              \mathbf{x}^{(k+1)} = \mathbf{x}^{(k)} - \tau \nabla F(\mathbf{x}^{(k)}) = \mathbf{x}^{(k)} - \tau (A^\top A \mathbf{x}^{(k)} - A^\top \mathbf{b}).
+          \]
+          If we set \(\tilde{A} = A^\top A\) and \(\tilde{\mathbf{b}} = A^\top \mathbf{b}\), we see that the gradient descent method is equivalent to the Richardson iteration method for solving the linear system \(\tilde{A}\mathbf{x} = \tilde{\mathbf{b}}\). Thus, both methods are closely related and can be used to solve the same problem, albeit through different iterative approaches.
+\end{enumerate}
+
+\paragraph{Problem 3. (Cubic Splines, 20\%)}
+
+We consider the spline space \( S_3 \) with knot vector \([-3, -2, 0, 1, 4]\). Which of the following functions is in the space \( S_3 \)? State a reason for each.
+
+\begin{enumerate}[label=(\alph*)]
+    \item \( f_1(x) = \pi x^2 \)
+
+          This is a polynomial of degree 2, which is less than or equal to 3. However, a cubic spline in \( S_3 \) must be piecewise cubic with possible breaks at the knots. Since \( f_1(x) \) is a global polynomial and does not change form at the knots, it is in \( S_3 \).
+
+    \item \( f_2(x) = |x+2|^3 + |x-1|^4 \)
+
+          The term \( |x-1|^4 \) is a quartic function, which is not allowed in \( S_3 \) (only degree 3 or less). Therefore, \( f_2(x) \notin S_3 \).
+
+    \item \( f_3(x) = \frac{1}{3} \max\{x+2,0\}^3 + \max\{x-1,0\}^3 \) can be rewritten as:
+          \[
+              f_3(x) =
+              \begin{cases}
+                  0                  & \text{for } x < -2,        \\
+                  \frac{1}{3}(x+2)^3 & \text{for } -2 \leq x < 1, \\
+                  (x-1)^3            & \text{for } x \geq 1.
+              \end{cases}
+          \]
+          We check the continuity and differentiability at the knots:
+          \begin{itemize}
+              \item At \( x = -2 \):
+                    \[
+                        f_3(-2) = 0, \quad f_3'(-2) = 0.
+                    \]
+              \item At \( x = 1 \):
+                    \[
+                        f_3(1) = 0, \quad f_3'(1) = 0.
+                    \]
+          \end{itemize}
+          Since \( f_3 \in C^2([-3, 4]) \) and is piecewise cubic on the intervals defined by the knots, it is in \( S_3 \).
+
+          Both terms are shifted cubic functions (truncated power functions), which are standard basis functions for cubic splines with knots at \(-2\) and \(1\). Thus, \( f_3(x) \in S_3 \).
+
+    \item For some \( a, b \in \mathbb{R} \), consider
+          \[
+              f_{a,b}(x) =
+              \begin{cases}
+                  x^3                    & \text{for } x \in [-3, 1), \\
+                  -x^3 + a x^2 + b x + 2 & \text{for } x \in [1, 4].
+              \end{cases}
+          \]
+          To be a spline in \( S_3 \), the function must be \( C^2 \) at \( x = 1 \) (continuous up to second derivative).
+          We check the conditions at \( x = 1 \):
+          \begin{itemize}
+              \item Continuity:
+                    \[
+                        1^3 = -1^3 + a(1)^2 + b(1) + 2 \implies 1 = -1 + a + b + 2 \implies a + b = 0.
+                    \]
+              \item First derivative continuity:
+                    \[
+                        3(1)^2 = -3(1)^2 + 2a(1) + b \implies 3 = -3 + 2a + b \implies 2a + b = 6.
+                    \]
+              \item Second derivative continuity:
+                    \[
+                        6 = -6 + 2a \implies 2a = 12 \implies a = 6.
+                    \]
+          \end{itemize}
+          Substituting \( a = 6 \) into \( a + b = 0 \) gives \( b = -6 \). Thus, \( f_{6,-6}(x) \in S_3 \).
+    \item The dimension of the cubic spline space \( S_3 \) with the given knot vector \([-3, -2, 0, 1, 4]\) is \( n + k \), where \( n \) is the number of intervals (number of knots minus 1) and \( k \) is the degree of the spline (here, 3). There are 5 knots, so 4 intervals. Thus,
+          \begin{align*}
+              \dim(S_k) & = \text{number of intervals} + \text{degree}                  \\
+                        & = \left(\operatorname{size}(\Delta) - 1\right) +  \deg s_i(x) \\
+                        & = (n-1) + k                                                   \\
+                        & = 4 + 3 = 7.
+          \end{align*}
+          Therefore, the space \( S_3 \) has dimension 7.
+\end{enumerate}
+
+\paragraph{Problem 4. (Numerical Integration, 20\%)}
+
+We want to compute the integral \( I(f) = \int_1^2 \frac{2}{x^2} \, dx \) numerically.
+
+\begin{enumerate}[label=(\alph*)]
+    \item \textbf{Compute the two quadratures \( Q_1(f) \) and \( Q_2(f) \):}
+          The quadrature \( Q_n(f) \) approximates the integral \( I(f) \) using \( n \) subintervals.
+          Here, we will use the trapezoidal rule and the composite trapezoidal rule.
+          \[
+              Q_n(f) = h \left[ \frac{1}{2}f(a) + \sum_{i=1}^{n-1} f(a + i h) + \frac{1}{2}f(b) \right], \quad h = \frac{b-a}{n}
+          \]
+
+          \begin{itemize}
+              \item \textbf{Trapezoidal rule (\( Q_1 \)):}
+                    \begin{align*}
+                        Q_1(f) & = \frac{b-a}{2} \left[ f(a) + f(b) \right] \\
+                               & = \frac{2-1}{2} \left[ f(1) + f(2) \right] \\
+                               & = \frac{1}{2} \left(2 + \frac{2}{4}\right) \\
+                               & = \frac{1}{2} \left(2 + 0.5\right)         \\
+                               & = 1.25
+                    \end{align*}
+              \item \textbf{Composite trapezoidal rule with \( n=2 \) (\( Q_2 \)):}
+
+                    The interval \([1,2]\) is split into two subintervals: \( h = \frac{2-1}{2} = 0.5 \).
+                    The nodes are \( x_0 = 1 \), \( x_1 = 1.5 \), \( x_2 = 2 \).
+
+                    \begin{align*}
+                        Q_2(f) & = \frac{h}{2} \left[ f(x_0) + 2f(x_1) + f(x_2) \right]           \\
+                               & = \frac{0.5}{2} \left[2 + 2 \cdot \frac{2}{(1.5)^2} + 0.5\right] \\
+                               & = 0.25 \left[2 + 2 \cdot \frac{2}{2.25} + 0.5\right]             \\
+                               & = 0.25 \left[2 + 2 \cdot 0.8889 + 0.5\right]                     \\
+                               & \approx 0.25 \left[2 + 1.7778 + 0.5\right]                       \\
+                               & = 0.25 \times 4.2778                                             \\
+                               & \approx 1.069
+                    \end{align*}
+          \end{itemize}
+
+    \item \textbf{Best upper bound for the error \( |I(f) - Q_2(f)| \):}
+          Given that:
+          \[
+              f(x) = \frac{2}{x^2}, \quad f''(x) = \frac{12}{x^4}, \quad \max_{x \in [1,2]} |f''(x)| = 12, \quad h = 0.5
+          \]
+          The error bound for the composite trapezoidal rule is:
+          \begin{align*}
+              |I(f) - Q_2(f)| & \leq \frac{(b-a) h^2}{12} \max_{x \in [a,b]} |f''(x)| \\
+                              & \leq \frac{(b-a) h^2}{12} \max_{x \in [a,b]} |f''(x)| \\
+                              & \leq \frac{1 \cdot (0.5)^2}{12} \cdot 12 = 0.25
+          \end{align*}
+
+    \item \textbf{Combine \( Q_1 \) and \( Q_2 \) using extrapolation to derive a more accurate quadrature \( Q_3 \):}
+
+          Using the Romberg method,
+          \[
+              A_{m,n} = \frac{4^m A_{m-1,n} - A_{m-1,2n}}{4^m - 1}
+          \]
+
+          we can combine \( A_{00} = Q_1 \) and \( A_{10} = Q_2 \) to get a more accurate estimate \(A_{11}= Q_3 \):
+          \begin{align*}
+              A_{11} & = Q_3(f) = \frac{4^1 Q_2(f) - Q_1(f)}{4^1 - 1}  \\
+                     & = \frac{4 \cdot \frac{77}{72} - \frac{5}{4}}{3} \\
+                     & = \frac{109}{108} \approx 1.00926
+          \end{align*}
+
+    \item \textbf{Which quadrature \( \tilde{Q} \) with minimal additional point evaluations do you have to compute to obtain the next step in the Romberg scheme? Which is the highest term in the Romberg scheme you can compute then?}
+
+          To continue the Romberg scheme, we need to compute \( Q_4(f) \) using the next level of extrapolation. This requires evaluating the function at one additional point, which is \( x = 1.25 \).
+          The highest term we can compute then is \( A_{20} \), which corresponds to \( Q_4(f) \).
+          \begin{align*}
+              A_{20} & = \frac{4^2 Q_4(f) - Q_2(f)}{4^2 - 1} \\
+                     & = \frac{16 Q_4(f) - Q_2(f)}{15} \\
+                     & = \frac{16 Q_4(f) - \frac{77}{72}}{15}
+          \end{align*}
+
+    \item \textbf{Does a quadrature formula \( Q(f) = \alpha f(x_0) + f(x_1) \) exist with degree of exactness 2?}
+
+    \textbf{Answer:} No, such a formula cannot have degree of exactness 2. With only two points and one free weight, you can match degree 1 (linear functions), but not degree 2 (quadratic functions). Simpson's rule, which is exact for quadratics, requires three points.
+
+    \medskip
+
+    \textbf{Assume} \( Q(f) \) is exact for \( f(x) = 1, x, x^2 \) on \([a, b]\):
+
+    \begin{align*}
+        \int_a^b 1\,dx &= 2\alpha \implies \alpha = \frac{b-a}{2} \\
+        \int_a^b x\,dx &= \alpha(x_0 + x_1) \implies x_0 + x_1 = a + b \\
+        \int_a^b x^2\,dx &= \alpha(x_0^2 + x_1^2)
+    \end{align*}
+
+    But \( x_0^2 + x_1^2 = (a+b)^2 - 2x_0 x_1 \), so
+    \[
+        x_0 x_1 = \frac{1}{2}\left[(a+b)^2 - \frac{2}{b-a}\frac{b^3-a^3}{3}\right]
+    \]
+    For general \( a, b \), this does not always yield valid nodes in \([a, b]\). In fact, two-point formulas cannot integrate all quadratics exactly unless using special nodes (Gaussian quadrature), not just endpoints or equally weighted nodes.
+
+    \medskip
+
+    \textbf{Conclusion:} No such formula exists for all quadratics; three points are needed (e.g., Simpson's rule).
+
+    \medskip
+
+    \textbf{Why three points?} A quadratic \( ax^2 + bx + c \) has three coefficients, so three conditions (nodes) are needed to determine it uniquely and integrate exactly.
+
+\end{enumerate}
