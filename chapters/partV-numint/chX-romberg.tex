@@ -22,7 +22,8 @@ of the smaller one inside.
 \begin{definition}{Composite Trapezoidal Rule}{trapezoidal-rule}
   Given $n=2^k$ sub-intervals (\(h_k = (b-a)/2^{k}\)), the composite trapezoidal rule approximates the integral as
   \begin{equation}
-    T_k = h_k\left[\frac12 f(a) +\sum_{i=1}^{2^{k}-1} f(a+i h_k) + \frac12 f(b)\right],
+    T_k = h_k\left[\frac12 f(a) +\sum_{i=1}^{2^{k}-1} f(a+i h_k) + \frac12 f(b)\right]
+    = \frac{b - a}{2^{k+1}} \left[f(a) + 2\sum_{i=1}^{2^{k}-1} f(a+i h_k) + f(b)\right],
     \quad
     h_k = \frac{b-a}{2^{k}}.
   \end{equation}
