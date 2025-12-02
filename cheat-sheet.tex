@@ -41,7 +41,16 @@
   {\color{subsubsectioncolor}\normalfont\scriptsize\bfseries}
   {\thesubsubsection}{1em}{\color{subsubsectioncolor}\rule{\linewidth}{0.2pt}\vspace{0.3ex}\\}
 
-
+% Minimal description list style
+\usepackage{enumitem}
+\setlist[description]{
+    font=\bfseries\scriptsize,
+    labelsep=0.5em,
+    leftmargin=0pt,
+    itemsep=0pt,
+    parsep=0pt,
+    topsep=0pt
+}
 
 % Reduce space before and after section titles
 \usepackage{titlesec}
@@ -128,7 +137,8 @@
               If \(\mathbf{x}^\ast\) is the exact solution and \(\mathbf{e}^{(k)} = \mathbf{x}^{(k)} - \mathbf{x}^\ast\),
               then
               \[
-                  \mathbf{e}^{(k+1)} = B\,\mathbf{e}^{(k)} \quad\Rightarrow\quad
+                  \mathbf{e}^{(k+1)} = B\,\mathbf{e}^{(k)}
+                  \quad\Rightarrow\quad
                   \mathbf{e}^{(k)} = B^k \mathbf{e}^{(0)}.
               \]
 
@@ -139,7 +149,7 @@
               \]
               where \(\rho(B)\) is the spectral radius of \(B\).
 
-              Asymptotic error decay (in any norm compatible with \(B\)):
+              Asymptotic error decay (in any matrix norm compatible with \(B\)):
               \[
                   \|\mathbf{e}^{(k)}\| \le C\,\rho(B)^k \,\|\mathbf{e}^{(0)}\|
               \]
@@ -148,7 +158,7 @@
         \item[Richardson:]
               For \(A\) (typically SPD) and relaxation parameter \(\omega>0\),
               \[
-                  \mathbf{x}^{(k+1)} = \mathbf{x}^{(k)} + \omega\bigl(\mathbf{b} - A\mathbf{x}^{(k)}\bigr)
+                  \mathbf{x}^{(k+1)} = \mathbf{x}^{(k)} + \omega\left(\mathbf{b} - A\mathbf{x}^{(k)}\right)
                   = (I - \omega A)\mathbf{x}^{(k)} + \omega\mathbf{b},
               \]
               so the iteration matrix is \(B_R = I - \omega A\).
@@ -164,16 +174,24 @@
               \end{itemize}
 
         \item[Jacobi:]
-              Let
+              Use the standard splitting
               \[
-                  A = D - (L + U),
+                  A = D + L + U,
               \]
-              where \(D\) is the diagonal of \(A\), and \(L,U\) are the strictly lower/upper
-              triangular parts (with this sign convention).
+              where \(D = \mathrm{diag}(A)\) is the diagonal of \(A\) and
+              \(L,U\) are the strictly lower/upper triangular parts.
 
-              Iteration matrix and update:
+              From \((D + L + U)\mathbf{x} = \mathbf{b}\) we write
+              \[
+                  D\mathbf{x} = \mathbf{b} - (L+U)\mathbf{x}.
+              \]
+              Replacing the exact \(\mathbf{x}\) by iterates:
+              \[
+                  D\mathbf{x}^{(k+1)} = \mathbf{b} - (L+U)\mathbf{x}^{(k)}.
+              \]
+              Thus
               \begin{align*}
-                  B_J                & = D^{-1}(L + U),                            \\
+                  B_J                & = -D^{-1}(L + U),                           \\
                   \mathbf{x}^{(k+1)} & = B_J\,\mathbf{x}^{(k)} + D^{-1}\mathbf{b}, \\
                   x_i^{(k+1)}        & = \frac{1}{a_{ii}}
                   \left[b_i - \sum_{j \ne i} a_{ij}\,x_j^{(k)}\right].
@@ -182,18 +200,25 @@
               \textbf{Convergence:}
               \begin{itemize}
                   \item If \(A\) is strictly diagonally dominant (SDD) by rows, then Jacobi converges.
-                  \item More generally, Jacobi converges iff \(\rho(B_J) < 1\).
+                  \item In general, Jacobi converges iff \(\rho(B_J) < 1\).
               \end{itemize}
 
         \item[Gauss--Seidel:]
-              With the same splitting \(A = D - (L+U)\), Gauss--Seidel corresponds to
+              With the same splitting \(A = D + L + U\),
               \[
-                  (D - L)\,\mathbf{x}^{(k+1)} = U\,\mathbf{x}^{(k)} + \mathbf{b},
+                  (D + L)\,\mathbf{x} = \mathbf{b} - U\,\mathbf{x}.
               \]
-              so the iteration matrix is
+              Replacing \(\mathbf{x}\) by iterates and using the new iterate on the left:
               \[
-                  B_{GS} = (D - L)^{-1} U.
+                  (D + L)\,\mathbf{x}^{(k+1)} = \mathbf{b} - U\,\mathbf{x}^{(k)}.
               \]
+              Hence
+              \[
+                  B_{GS} = -(D + L)^{-1} U,
+                  \qquad
+                  \mathbf{x}^{(k+1)} = B_{GS}\,\mathbf{x}^{(k)} + (D+L)^{-1}\mathbf{b}.
+              \]
+
               Componentwise:
               \[
                   x_i^{(k+1)} = \frac{1}{a_{ii}}\left[
@@ -205,11 +230,11 @@
 
               \textbf{Convergence:}
               \begin{itemize}
-                  \item If \(A\) is SPD, Gauss--Seidel is convergent (monotone in the \(A\)-norm).
+                  \item If \(A\) is SPD, Gauss--Seidel is convergent (and error decreases monotonically in the \(A\)-norm).
               \end{itemize}
 
         \item[SOR (Successive Over-Relaxation):]
-              For \(\omega \in \mathbb{R}\setminus\{0\}\),
+              For \(\omega \in \mathbb{R}\setminus\{0\}\), the componentwise form is
               \[
                   x_i^{(k+1)} =
                   (1-\omega)\,x_i^{(k)}
@@ -219,14 +244,15 @@
                       - \sum_{j>i} a_{ij}\,x_j^{(k)}
                       \right].
               \]
-              In matrix form (again with \(A = D - (L+U)\)):
+
+              In matrix form (with \(A = D + L + U\)) one can show
               \[
-                  (D - \omega L)\,\mathbf{x}^{(k+1)}
-                  = \bigl[(1-\omega)D + \omega U\bigr]\mathbf{x}^{(k)} + \omega\mathbf{b},
+                  (D + \omega L)\,\mathbf{x}^{(k+1)}
+                  = \left([(1-\omega)D - \omega U\right)]\mathbf{x}^{(k)} + \omega\mathbf{b},
               \]
               hence
               \[
-                  B_{\omega} = (D - \omega L)^{-1}\bigl[(1-\omega)D + \omega U\bigr].
+                  B_{\omega} = (D + \omega L)^{-1}\left([(1-\omega)D - \omega U\right)].
               \]
 
               \textbf{Convergence (classical results):}
@@ -248,14 +274,11 @@
               \[
                   \rho(B_{GS}) = \rho(B_J)^2
                   \quad\text{and}\quad
-                  \rho\bigl(B_{\omega_{\text{opt}}}\bigr)
+                  \rho\left(B_{\omega_{\text{opt}}}\right)
                   < \rho(B_{GS}) = \rho(B_J)^2 < \rho(B_J),
               \]
               so SOR with \(\omega_{\text{opt}}\) is fastest, followed by Gauss--Seidel, then Jacobi.
     \end{description}
-
-
-    % --- Column 2 ---
     \section*{Interpolation \& Splines}
     \subsection*{Lagrange \& Newton}
     \begin{description}
@@ -393,6 +416,250 @@
         \item[\textbf{Gauss:}] Choose nodes $x_i$ as zeros of orthogonal polynomial $p_n$ w.r.t. weight $w$. $Q_{w,n}(f) = \sum_{i=1}^n \omega_i f(x_i)$ has exactness degree $2n-1$. Error: $\frac{f^{(2n)}(\xi)}{(2n)!}\int_a^b w(x)\omega_n(x)^2 dx$
     \end{description}
     \section*{ODEs}
+    % Cheat Sheet: Numerical Methods for ODEs
+
+    \section*{Initial Value Problems (IVPs)}
+    Solve
+    \[
+        y'(t) = f(t,y(t)), \quad t \in [t_0,T], \quad y(t_0) = y_0 \in \mathbb{R}^m.
+    \]
+    Assume $f$ is Lipschitz in $y$:
+    \[
+        \|f(t,y) - f(t,z)\| \le L \|y-z\| \quad \Rightarrow \quad
+        \text{existence/uniqueness of solution}.
+    \]
+    Discretization:
+    \[
+        t_n = t_0 + n h, \quad h = \frac{T-t_0}{N}, \quad n = 0,\dots,N, \quad y_n := y(t_n).
+    \]
+    \section*{One-Step Methods}
+
+    General form:
+    \[
+        u_{n+1} = u_n + h\,\Phi(t_n,u_n,h), \quad u_0 = y_0.
+    \]
+
+    \textbf{Local truncation error (LTE):}
+    \[
+        \tau_{n+1} := \frac{y_{n+1} - y_n}{h} - \Phi(t_n,y_n,h).
+    \]
+    \textbf{Consistency of order $p$:}
+    \[
+        \|\tau_{n+1}\| = O(h^p) \quad \Leftrightarrow \quad
+        y_{n+1} - y_n - h\,\Phi(t_n,y_n,h) = O(h^{p+1}).
+    \]
+
+    \textbf{Convergence of order $p$:}
+    \[
+        \max_{0\le n\le N} \|u_n - y_n\| = O(h^p).
+    \]
+    \textbf{Fundamental relation (one-step methods):}
+    \[
+        \text{Consistency of order $p$ + (zero-)stability} \quad \Rightarrow \quad
+        \text{Convergence of order $p$}.
+    \]
+
+    \section*{Basic One-Step Methods}
+
+    \subsection*{Explicit (Forward) Euler}
+    \[
+        u_{n+1} = u_n + h f(t_n,u_n).
+    \]
+
+    \textbf{Properties:}
+    \begin{itemize}
+        \item Explicit, one function evaluation per step.
+        \item LTE $= O(h^2)$, global error $= O(h)$ (order 1).
+    \end{itemize}
+
+    \subsection*{Implicit (Backward) Euler}
+    \[
+        u_{n+1} = u_n + h f(t_{n+1},u_{n+1}) \quad \Rightarrow \quad
+        \text{solve nonlinear eqn for } u_{n+1}.
+    \]
+
+    \textbf{Properties:}
+    \begin{itemize}
+        \item Implicit, LTE $= O(h^2)$, global error $= O(h)$ (order 1).
+        \item A-stable (good for stiff problems).
+    \end{itemize}
+
+    \subsection*{Taylor Methods (Order $q$)}
+    Use Taylor expansion of exact solution:
+    \[
+        y(t_{n+1}) = y(t_n) + h y'(t_n) + \frac{h^2}{2} y''(t_n) + \cdots
+        + \frac{h^q}{q!} y^{(q)}(t_n) + O(h^{q+1}).
+    \]
+    Define $u_{n+1}$ by truncating at $h^q$ and replacing $y^{(k)}$ by expressions involving
+    $f$ and its derivatives. Requires higher derivatives of $f$.
+
+    \section*{Runge--Kutta (RK) Methods}
+
+    General $s$-stage RK method:
+    \[
+        \begin{aligned}
+            k_i     & = f\left(t_n + c_i h,\; u_n + h \sum_{j=1}^s a_{ij} k_j\right),
+            \quad i=1,\dots,s,                                                       \\
+            u_{n+1} & = u_n + h \sum_{i=1}^s b_i k_i.
+        \end{aligned}
+    \]
+    Butcher tableau:
+    \[
+        \begin{array}{c|ccc}
+            c_1    & a_{11} & \cdots & a_{1s} \\
+            \vdots & \vdots &        & \vdots \\
+            c_s    & a_{s1} & \cdots & a_{ss} \\ \hline
+                   & b_1    & \cdots & b_s
+        \end{array}
+    \]
+
+    \textbf{Explicit RK:} $a_{ij} = 0$ for $j \ge i$ (no implicit equations).
+
+    \textbf{Examples:}
+    \begin{itemize}
+        \item Explicit midpoint (order 2):
+              \[
+                  \begin{aligned}
+                      k_1     & = f(t_n,u_n), \quad k_2     = f\left(t_n + \tfrac{h}{2},\,u_n + \tfrac{h}{2}k_1\right), \\
+                      u_{n+1} & = u_n + h k_2.
+                  \end{aligned}
+              \]
+        \item Classical RK4 (order 4):
+              \[
+                  \begin{aligned}
+                      k_1     & = f(t_n,u_n),                                              \\
+                      k_2     & = f\left(t_n + \tfrac{h}{2},\,u_n + \tfrac{h}{2}k_1\right), \\
+                      k_3     & = f\left(t_n + \tfrac{h}{2},\,u_n + \tfrac{h}{2}k_2\right), \\
+                      k_4     & = f\left(t_n + h,\,u_n + h k_3\right),                      \\
+                      u_{n+1} & = u_n + \tfrac{h}{6}(k_1 + 2k_2 + 2k_3 + k_4).
+                  \end{aligned}
+              \]
+    \end{itemize}
+
+    \section*{Absolute Stability}
+
+    Test equation:
+    \[
+        y' = \lambda y, \quad \lambda \in \mathbb{C}, \quad y(0)=1.
+    \]
+
+    A one-step method gives
+    \[
+        u_{n+1} = R(z)\,u_n, \quad z = h\lambda,
+    \]
+    where $R(z)$ is the \emph{stability function}.
+
+    \textbf{Region of absolute stability:}
+    \[
+        \mathcal{S} := \{ z \in \mathbb{C} : |R(z)| \le 1 \}.
+    \]
+
+    Examples:
+    \begin{itemize}
+        \item Forward Euler: $R(z) = 1 + z$.
+        \item Backward Euler: $R(z) = \frac{1}{1 - z}$ (A-stable).
+    \end{itemize}
+
+    \section*{Linear Multistep Methods (LMM)}
+
+    General $k$-step LMM:
+    \[
+        \sum_{j=0}^k \alpha_j u_{n+j}
+        = h \sum_{j=0}^k \beta_j f(t_{n+j},u_{n+j}),
+    \]
+    with constants $\alpha_j, \beta_j$ not depending on $h,n$.
+
+    Define characteristic polynomials:
+    \[
+        \rho(\xi) := \sum_{j=0}^k \alpha_j \xi^j, \qquad
+        \sigma(\xi) := \sum_{j=0}^k \beta_j \xi^j.
+    \]
+
+    \subsection*{Consistency and Order of LMM}
+
+    Consistency (at least order 1):
+    \[
+        \rho(1) = 0, \quad \rho'(1) = \sigma(1).
+    \]
+
+    Order $p$:
+    \[
+        \sum_{j=0}^k \alpha_j \frac{(jh)^m}{m!}
+        - h\sum_{j=0}^k \beta_j \frac{(jh)^{m-1}}{(m-1)!}
+        = O(h^{p+1})\quad\text{for }m=0,\dots,p.
+    \]
+    Equivalently, a set of algebraic ``order conditions'' relating $\alpha_j,\beta_j$.
+
+    \subsection*{Zero-Stability and Convergence}
+
+    Zero-stability (root condition):
+    \begin{itemize}
+        \item All roots $\xi$ of $\rho(\xi)=0$ satisfy $|\xi|\le 1$,
+        \item Any root with $|\xi|=1$ is simple.
+    \end{itemize}
+
+    \textbf{Fundamental theorem (LMM):}
+    \[
+        \text{Consistency of order $p$ + zero-stability} \quad \Rightarrow \quad
+        \text{Convergence of order $p$}.
+    \]
+
+    \section*{Adams Methods (LMM)}
+    \subsection*{Explicit Adams--Bashforth (AB)}
+    Use past function values $f_{n}, f_{n-1},\dots$.
+    \begin{itemize}
+        \item AB1 (Forward Euler): \(u_{n+1} = u_n + h f_n.\)
+        \item AB2 (order 2): \(u_{n+1} = u_n + \frac{h}{2}\left(3 f_n - f_{n-1}\right).\)
+        \item AB3 (order 3): \(u_{n+1} = u_n + \frac{h}{12}\left(23 f_n - 16 f_{n-1} + 5 f_{n-2}\right).\)
+    \end{itemize}
+    \subsection*{Implicit Adams--Moulton (AM)}
+    Use $f_{n+1}$ as well (implicit).
+    \begin{itemize}
+        \item AM1 (Backward Euler): \(u_{n+1} = u_n + h f_{n+1}.\)
+        \item AM2 (trapezoidal rule, order 2): \(u_{n+1} = u_n + \frac{h}{2}\left(f_{n+1} + f_n\right).\)
+        \item AM3 (order 3): \(u_{n+1} = u_n + \frac{h}{12}\left(5 f_{n+1} + 8 f_n - f_{n-1}\right).\)
+    \end{itemize}
+
+    \section*{Predictor--Corrector Methods}
+    \begin{itemize}
+        \item Predictor (explicit, e.g. AB method): compute a provisional value $\tilde{u}_{n+1}$.
+        \item Corrector (implicit, e.g. AM method): use $\tilde{u}_{n+1}$ inside an AM formula to obtain $u_{n+1}$.
+    \end{itemize}
+
+    Example (AB2--AM2 PC method):
+    \begin{align*}
+        \text{Predict:}\quad
+        \tilde{u}_{n+1} & = u_n + \frac{h}{2}\left(3 f_n - f_{n-1}\right),                  \\
+        \text{Correct:}\quad
+        u_{n+1}         & = u_n + \frac{h}{2}\left(f(t_{n+1},\tilde{u}_{n+1}) + f_n\right).
+    \end{align*}
+
+    \section*{Backward Differentiation Formulas (BDF)}
+
+    Implicit LMM based on backward differences; general form:
+    \[
+        \sum_{j=0}^k \alpha_j u_{n+j} = h \beta\, f(t_{n+k},u_{n+k}),
+    \]
+    with $\beta \ne 0$ and only $f_{n+k}$ on the right.
+
+    Standard BDF $k$ (written with $u_{n+1}$ as newest value):
+
+    \begin{itemize}
+        \item BDF1 (Backward Euler, order 1):
+              \[
+                  \frac{u_{n+1} - u_n}{h} = f_{n+1}.
+              \]
+        \item BDF2 (order 2):
+              \[
+                  \frac{3 u_{n+1} - 4 u_n + u_{n-1}}{2h} = f_{n+1}.
+              \]
+        \item BDF3 (order 3):
+              \[
+                  \frac{11 u_{n+1} - 18 u_n + 9 u_{n-1} - 2 u_{n-2}}{6h} = f_{n+1}.
+              \]
+    \end{itemize}
+
+    \textbf{Remark:} BDF methods are stiffly stable up to order 6; higher-order BDFs are not zero-stable.
     \subsection*{IVPs \& One-step Methods}
     \begin{description}
         \item[\textbf{IVP:}] $y'(t)=f(t,y(t))$, $y(t_0)=y_0$. If $f$ continuous and Lipschitz in $y$, unique solution exists

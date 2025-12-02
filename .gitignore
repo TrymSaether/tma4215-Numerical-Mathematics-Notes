@@ -1,0 +1,16 @@
+# .build/
+
+# Ignore LaTeX intermediate files
+*.aux
+*.bbl
+*.blg
+*.brf
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.synctex.gz
+*.synctex(busy)
+*.fdb_latexmk
+*.fls
